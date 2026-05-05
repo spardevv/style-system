@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Style System Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ── SIDEBAR ──────────────────────────────── -->
+    <div id="sidebar">
+
+      <div id="sh">
+        <span>Tokens · YAML</span>
+        <div class="btn-group">
+          <input type="file" id="fileInput" style="display:none" accept=".yaml,.yml" />
+          <button id="ib">Import</button>
+          <button id="ab">Apply ↵</button>
+        </div>
+      </div>
+
+      <textarea id="ye" spellcheck="false"></textarea>
+
+      <div id="eb"></div>
+
+      <div id="export-area">
+        <button id="exportYaml">⬇ Export Config</button>
+      </div>
+
+    </div>
+    <!-- /SIDEBAR -->
+
+    <!-- ── MAIN CANVAS ──────────────────────────── -->
+    <div id="main"></div>
+
+  </div><!-- /#app -->
+
+  <!-- External libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+  <!-- App logic -->
+  <script src="app.js"></script>
+</body>
+</html>
