@@ -1,50 +1,346 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Style System Editor</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div id="app">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Style System Editor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- ── SIDEBAR ──────────────────────────────── -->
+      <div id="sidebar">
 
-    <!-- ── SIDEBAR ──────────────────────────────── -->
-    <div id="sidebar">
+        <!-- Header -->
+        <div id="sh">
+          <span>Design Tokens</span>
+          <div class="btn-group">
+            <input type="file" id="fileInput" style="display:none" accept=".yaml,.yml" />
+            <button id="ib">Import</button>
+            <button id="ab">Apply ↵</button>
+          </div>
+        </div>
 
-      <div id="sh">
-        <span>Tokens · YAML</span>
-        <div class="btn-group">
-          <input type="file" id="fileInput" style="display:none" accept=".yaml,.yml" />
-          <button id="ib">Import</button>
-          <button id="ab">Apply ↵</button>
+        <!-- Scrollable form area -->
+        <div id="token-form">
+
+          <!-- META -->
+          <details class="section" open>
+            <summary class="section-title">
+              <span class="section-icon">◈</span> Meta
+            </summary>
+            <div class="section-body">
+              <div class="field">
+                <label>Name</label>
+                <input type="text" id="f-meta-name" value="Azure Light" />
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label>Version</label>
+                  <input type="text" id="f-meta-version" value="1.0.0" />
+                </div>
+                <div class="field">
+                  <label>Author</label>
+                  <input type="text" id="f-meta-author" value="System" />
+                </div>
+              </div>
+              <div class="field">
+                <label>Theme Mode</label>
+                <div class="toggle-row">
+                  <button class="toggle-btn active" id="f-theme-light" data-val="light">☀ Light</button>
+                  <button class="toggle-btn" id="f-theme-dark" data-val="dark">☾ Dark</button>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- COLORS -->
+          <details class="section" open>
+            <summary class="section-title">
+              <span class="section-icon">◉</span> Colors
+            </summary>
+            <div class="section-body">
+              <div class="color-grid">
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-primary" value="#2563eb" />
+                    <div class="color-preview" id="cp-primary" style="background:#2563eb"></div>
+                  </div>
+                  <label>Primary</label>
+                  <input type="text" class="color-hex" id="ch-primary" value="#2563eb" maxlength="7" />
+                </div>
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-secondary" value="#1e40af" />
+                    <div class="color-preview" id="cp-secondary" style="background:#1e40af"></div>
+                  </div>
+                  <label>Secondary</label>
+                  <input type="text" class="color-hex" id="ch-secondary" value="#1e40af" maxlength="7" />
+                </div>
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-accent" value="#7c3aed" />
+                    <div class="color-preview" id="cp-accent" style="background:#7c3aed"></div>
+                  </div>
+                  <label>Accent</label>
+                  <input type="text" class="color-hex" id="ch-accent" value="#7c3aed" maxlength="7" />
+                </div>
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-highlight" value="#0ea5e9" />
+                    <div class="color-preview" id="cp-highlight" style="background:#0ea5e9"></div>
+                  </div>
+                  <label>Highlight</label>
+                  <input type="text" class="color-hex" id="ch-highlight" value="#0ea5e9" maxlength="7" />
+                </div>
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-bg" value="#f0f4ff" />
+                    <div class="color-preview" id="cp-bg" style="background:#f0f4ff"></div>
+                  </div>
+                  <label>Background</label>
+                  <input type="text" class="color-hex" id="ch-bg" value="#f0f4ff" maxlength="7" />
+                </div>
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-surface" value="#ffffff" />
+                    <div class="color-preview" id="cp-surface" style="background:#ffffff"></div>
+                  </div>
+                  <label>Surface</label>
+                  <input type="text" class="color-hex" id="ch-surface" value="#ffffff" maxlength="7" />
+                </div>
+              </div>
+
+              <div class="subsection-label">Text</div>
+              <div class="color-grid">
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-text-primary" value="#1e2a4a" />
+                    <div class="color-preview" id="cp-text-primary" style="background:#1e2a4a"></div>
+                  </div>
+                  <label>Primary</label>
+                  <input type="text" class="color-hex" id="ch-text-primary" value="#1e2a4a" maxlength="7" />
+                </div>
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-text-secondary" value="#4a5878" />
+                    <div class="color-preview" id="cp-text-secondary" style="background:#4a5878"></div>
+                  </div>
+                  <label>Secondary</label>
+                  <input type="text" class="color-hex" id="ch-text-secondary" value="#4a5878" maxlength="7" />
+                </div>
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-text-muted" value="#7a8aaa" />
+                    <div class="color-preview" id="cp-text-muted" style="background:#7a8aaa"></div>
+                  </div>
+                  <label>Muted</label>
+                  <input type="text" class="color-hex" id="ch-text-muted" value="#7a8aaa" maxlength="7" />
+                </div>
+              </div>
+
+              <div class="subsection-label">Status</div>
+              <div class="color-grid">
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-success" value="#16a34a" />
+                    <div class="color-preview" id="cp-success" style="background:#16a34a"></div>
+                  </div>
+                  <label>Success</label>
+                  <input type="text" class="color-hex" id="ch-success" value="#16a34a" maxlength="7" />
+                </div>
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-warning" value="#d97706" />
+                    <div class="color-preview" id="cp-warning" style="background:#d97706"></div>
+                  </div>
+                  <label>Warning</label>
+                  <input type="text" class="color-hex" id="ch-warning" value="#d97706" maxlength="7" />
+                </div>
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-error" value="#dc2626" />
+                    <div class="color-preview" id="cp-error" style="background:#dc2626"></div>
+                  </div>
+                  <label>Error</label>
+                  <input type="text" class="color-hex" id="ch-error" value="#dc2626" maxlength="7" />
+                </div>
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-info" value="#0284c7" />
+                    <div class="color-preview" id="cp-info" style="background:#0284c7"></div>
+                  </div>
+                  <label>Info</label>
+                  <input type="text" class="color-hex" id="ch-info" value="#0284c7" maxlength="7" />
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- GRADIENTS -->
+          <details class="section">
+            <summary class="section-title">
+              <span class="section-icon">▣</span> Gradients
+            </summary>
+            <div class="section-body">
+              <div class="grad-field" id="gf-brand">
+                <div class="grad-label-row">
+                  <label>Brand</label>
+                  <div class="grad-preview" id="gp-brand"></div>
+                </div>
+                <div class="field-row">
+                  <div class="color-field mini">
+                    <div class="color-preview-wrap">
+                      <input type="color" id="f-grad-brand-a" value="#1e40af" />
+                      <div class="color-preview" id="cp-grad-brand-a" style="background:#1e40af"></div>
+                    </div>
+                    <label>From</label>
+                  </div>
+                  <div class="color-field mini">
+                    <div class="color-preview-wrap">
+                      <input type="color" id="f-grad-brand-b" value="#2563eb" />
+                      <div class="color-preview" id="cp-grad-brand-b" style="background:#2563eb"></div>
+                    </div>
+                    <label>To</label>
+                  </div>
+                  <div class="field angle-field">
+                    <label>°</label>
+                    <input type="number" id="f-grad-brand-deg" value="135" min="0" max="360" />
+                  </div>
+                </div>
+              </div>
+              <div class="grad-field">
+                <div class="grad-label-row"><label>Neon</label><div class="grad-preview" id="gp-neon"></div></div>
+                <div class="field-row">
+                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-neon-a" value="#7c3aed" /><div class="color-preview" id="cp-grad-neon-a" style="background:#7c3aed"></div></div><label>From</label></div>
+                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-neon-b" value="#2563eb" /><div class="color-preview" id="cp-grad-neon-b" style="background:#2563eb"></div></div><label>To</label></div>
+                  <div class="field angle-field"><label>°</label><input type="number" id="f-grad-neon-deg" value="135" min="0" max="360" /></div>
+                </div>
+              </div>
+              <div class="grad-field">
+                <div class="grad-label-row"><label>Cyber</label><div class="grad-preview" id="gp-cyber"></div></div>
+                <div class="field-row">
+                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-cyber-a" value="#0ea5e9" /><div class="color-preview" id="cp-grad-cyber-a" style="background:#0ea5e9"></div></div><label>From</label></div>
+                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-cyber-b" value="#2563eb" /><div class="color-preview" id="cp-grad-cyber-b" style="background:#2563eb"></div></div><label>To</label></div>
+                  <div class="field angle-field"><label>°</label><input type="number" id="f-grad-cyber-deg" value="135" min="0" max="360" /></div>
+                </div>
+              </div>
+              <div class="grad-field">
+                <div class="grad-label-row"><label>Aurora</label><div class="grad-preview" id="gp-aurora"></div></div>
+                <div class="field-row">
+                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-aurora-a" value="#7c3aed" /><div class="color-preview" id="cp-grad-aurora-a" style="background:#7c3aed"></div></div><label>From</label></div>
+                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-aurora-b" value="#0ea5e9" /><div class="color-preview" id="cp-grad-aurora-b" style="background:#0ea5e9"></div></div><label>To</label></div>
+                  <div class="field angle-field"><label>°</label><input type="number" id="f-grad-aurora-deg" value="135" min="0" max="360" /></div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- TYPOGRAPHY -->
+          <details class="section">
+            <summary class="section-title">
+              <span class="section-icon">Aa</span> Typography
+            </summary>
+            <div class="section-body">
+              <div class="field">
+                <label>Primary Font</label>
+                <input type="text" id="f-ff-primary" value="Inter" placeholder="e.g. Inter" />
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label>Secondary</label>
+                  <input type="text" id="f-ff-secondary" value="JetBrains Mono" placeholder="Mono font" />
+                </div>
+                <div class="field">
+                  <label>Display</label>
+                  <input type="text" id="f-ff-display" value="Space Grotesk" placeholder="Display font" />
+                </div>
+              </div>
+
+              <div class="subsection-label">Font Sizes (px)</div>
+              <div class="slider-grid">
+                <div class="slider-field"><label>XS</label><input type="range" id="f-sz-xs" min="8" max="16" value="10" /><span class="slider-val" id="sv-sz-xs">10</span></div>
+                <div class="slider-field"><label>SM</label><input type="range" id="f-sz-sm" min="10" max="20" value="12" /><span class="slider-val" id="sv-sz-sm">12</span></div>
+                <div class="slider-field"><label>MD</label><input type="range" id="f-sz-md" min="12" max="24" value="14" /><span class="slider-val" id="sv-sz-md">14</span></div>
+                <div class="slider-field"><label>LG</label><input type="range" id="f-sz-lg" min="14" max="32" value="18" /><span class="slider-val" id="sv-sz-lg">18</span></div>
+                <div class="slider-field"><label>XL</label><input type="range" id="f-sz-xl" min="18" max="48" value="24" /><span class="slider-val" id="sv-sz-xl">24</span></div>
+                <div class="slider-field"><label>XXL</label><input type="range" id="f-sz-xxl" min="24" max="64" value="32" /><span class="slider-val" id="sv-sz-xxl">32</span></div>
+                <div class="slider-field"><label>Display</label><input type="range" id="f-sz-display" min="32" max="96" value="48" /><span class="slider-val" id="sv-sz-display">48</span></div>
+              </div>
+            </div>
+          </details>
+
+          <!-- SPACING & RADIUS -->
+          <details class="section">
+            <summary class="section-title">
+              <span class="section-icon">⊞</span> Spacing &amp; Radius
+            </summary>
+            <div class="section-body">
+              <div class="subsection-label">Spacing (px)</div>
+              <div class="slider-grid">
+                <div class="slider-field"><label>XS</label><input type="range" id="f-sp-xs" min="2" max="12" value="4" /><span class="slider-val" id="sv-sp-xs">4</span></div>
+                <div class="slider-field"><label>SM</label><input type="range" id="f-sp-sm" min="4" max="20" value="8" /><span class="slider-val" id="sv-sp-sm">8</span></div>
+                <div class="slider-field"><label>MD</label><input type="range" id="f-sp-md" min="8" max="32" value="16" /><span class="slider-val" id="sv-sp-md">16</span></div>
+                <div class="slider-field"><label>LG</label><input type="range" id="f-sp-lg" min="16" max="48" value="24" /><span class="slider-val" id="sv-sp-lg">24</span></div>
+                <div class="slider-field"><label>XL</label><input type="range" id="f-sp-xl" min="24" max="80" value="40" /><span class="slider-val" id="sv-sp-xl">40</span></div>
+                <div class="slider-field"><label>XXL</label><input type="range" id="f-sp-xxl" min="40" max="128" value="64" /><span class="slider-val" id="sv-sp-xxl">64</span></div>
+              </div>
+
+              <div class="subsection-label">Border Radius (px)</div>
+              <div class="slider-grid">
+                <div class="slider-field"><label>SM</label><input type="range" id="f-br-sm" min="0" max="12" value="4" /><span class="slider-val" id="sv-br-sm">4</span></div>
+                <div class="slider-field"><label>MD</label><input type="range" id="f-br-md" min="0" max="20" value="8" /><span class="slider-val" id="sv-br-md">8</span></div>
+                <div class="slider-field"><label>LG</label><input type="range" id="f-br-lg" min="0" max="32" value="12" /><span class="slider-val" id="sv-br-lg">12</span></div>
+                <div class="slider-field"><label>XL</label><input type="range" id="f-br-xl" min="0" max="48" value="16" /><span class="slider-val" id="sv-br-xl">16</span></div>
+              </div>
+            </div>
+          </details>
+
+          <!-- UI COMPONENTS -->
+          <details class="section">
+            <summary class="section-title">
+              <span class="section-icon">⬡</span> UI Components
+            </summary>
+            <div class="section-body">
+              <div class="subsection-label">Card</div>
+              <div class="slider-grid">
+                <div class="slider-field"><label>Radius</label><input type="range" id="f-ui-card-radius" min="0" max="32" value="12" /><span class="slider-val" id="sv-ui-card-radius">12</span></div>
+                <div class="slider-field"><label>Padding</label><input type="range" id="f-ui-card-padding" min="8" max="40" value="16" /><span class="slider-val" id="sv-ui-card-padding">16</span></div>
+              </div>
+              <div class="subsection-label">Button</div>
+              <div class="slider-grid">
+                <div class="slider-field"><label>Radius</label><input type="range" id="f-ui-btn-radius" min="0" max="32" value="8" /><span class="slider-val" id="sv-ui-btn-radius">8</span></div>
+              </div>
+              <div class="subsection-label">Input</div>
+              <div class="slider-grid">
+                <div class="slider-field"><label>Radius</label><input type="range" id="f-ui-input-radius" min="0" max="24" value="8" /><span class="slider-val" id="sv-ui-input-radius">8</span></div>
+              </div>
+            </div>
+          </details>
+
+        </div>
+        <!-- /token-form -->
+
+        <div id="eb"></div>
+
+        <div id="export-area">
+          <button id="exportYaml">⬇ Export YAML</button>
         </div>
       </div>
+      <!-- /SIDEBAR -->
 
-      <textarea id="ye" spellcheck="false"></textarea>
-
-      <div id="eb"></div>
-
-      <div id="export-area">
-        <button id="exportYaml">⬇ Export Config</button>
-      </div>
-
+      <!-- ── MAIN CANVAS ──────────────────────────── -->
+      <div id="main"></div>
     </div>
-    <!-- /SIDEBAR -->
 
-    <!-- ── MAIN CANVAS ──────────────────────────── -->
-    <div id="main"></div>
-
-  </div><!-- /#app -->
-
-  <!-- External libs -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-
-  <!-- App logic -->
-  <script src="app.js"></script>
-</body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <script src="app.js"></script>
+  </body>
 </html>
