@@ -38,6 +38,7 @@
 
   /* Effects & motion — populated by JS from the Effects & Motion panel */
   --tok-border-w:       1px;
+  --tok-border-style:   solid;
   --tok-anim-speed:     1;
 
   /* Fluid easing used across the sidebar's own interactions (accordion,
@@ -197,45 +198,60 @@ body {
   border-top: 1px solid var(--shell-border);
 }
 
-.export-label {
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--shell-text-muted);
-  font-family: 'JetBrains Mono', monospace;
-  margin-bottom: 8px;
-}
-
-.export-btn-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-}
-
-.export-btn {
+/* ── Single "generate design system" CTA ────────── */
+.generate-btn {
   width: 100%;
-  background: transparent;
-  color: var(--shell-text-muted);
-  border: 1px solid var(--shell-border);
-  border-radius: 4px;
-  padding: 8px 4px;
-  font-size: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: linear-gradient(135deg, var(--shell-accent), color-mix(in srgb, var(--shell-accent) 70%, #7c3aed));
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 10px;
   cursor: pointer;
-  font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--shell-accent) 40%, transparent);
+  transition: transform 0.25s var(--ease-fluid), box-shadow 0.25s var(--ease-fluid-soft), opacity 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.generate-btn-label {
+  font-size: 11px;
+  font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
-.export-btn:hover {
-  color: #fff;
-  background: var(--shell-accent);
-  border-color: var(--shell-accent);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--shell-accent) 40%, transparent);
+.generate-btn-sub {
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.75);
 }
-.export-btn:active { transform: scale(0.96); }
-.export-btn.flash { animation: border-glow 0.5s ease; }
+.generate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--shell-accent) 55%, transparent);
+}
+.generate-btn:active { transform: translateY(0) scale(0.97); }
+.generate-btn.flash { animation: border-glow 0.5s ease; }
+.generate-btn.generating {
+  cursor: wait;
+  opacity: 0.85;
+}
+.generate-btn.generating .generate-btn-label::after {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 8px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  vertical-align: -1px;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── MAIN CANVAS ────────────────────────────────── */
 #main {
@@ -291,7 +307,7 @@ body {
   background: var(--shell-surface);
   border-radius: 8px;
   padding: 14px;
-  border: var(--tok-border-w, 1px) solid var(--shell-border);
+  border: var(--tok-border-w, 1px) var(--tok-border-style, solid) var(--shell-border);
   overflow: hidden;
   position: relative;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -317,7 +333,7 @@ body {
   padding: 10px 14px;
   background: var(--shell-surface);
   border-radius: 6px;
-  border: var(--tok-border-w, 1px) solid var(--shell-border);
+  border: var(--tok-border-w, 1px) var(--tok-border-style, solid) var(--shell-border);
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -333,7 +349,7 @@ body {
 /* ── GRADIENT TILE ──────────────────────────────── */
 .grad-tile {
   border-radius: 8px;
-  border: var(--tok-border-w, 1px) solid var(--shell-border);
+  border: var(--tok-border-w, 1px) var(--tok-border-style, solid) var(--shell-border);
   overflow: hidden;
   aspect-ratio: 16/9;
   position: relative;
@@ -353,7 +369,7 @@ body {
   background: var(--shell-surface);
   border-radius: 8px;
   padding: 14px;
-  border: var(--tok-border-w, 1px) solid var(--shell-border);
+  border: var(--tok-border-w, 1px) var(--tok-border-style, solid) var(--shell-border);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -366,7 +382,7 @@ body {
 /* ── MINI SCREEN ────────────────────────────────── */
 .mini-screen {
   border-radius: 8px;
-  border: var(--tok-border-w, 1px) solid var(--shell-border);
+  border: var(--tok-border-w, 1px) var(--tok-border-style, solid) var(--shell-border);
   overflow: hidden;
   background: var(--shell-surface);
 }
@@ -484,7 +500,7 @@ body {
 .banner-comp {
   border-radius: 8px;
   overflow: hidden;
-  border: var(--tok-border-w, 1px) solid var(--shell-border);
+  border: var(--tok-border-w, 1px) var(--tok-border-style, solid) var(--shell-border);
   position: relative;
 }
 
@@ -511,7 +527,7 @@ body {
 .window-comp {
   border-radius: 8px;
   overflow: hidden;
-  border: var(--tok-border-w, 1px) solid var(--shell-border);
+  border: var(--tok-border-w, 1px) var(--tok-border-style, solid) var(--shell-border);
   background: var(--shell-surface);
 }
 .window-titlebar {
@@ -585,7 +601,7 @@ body {
 /* ── STAT CARD ──────────────────────────────────── */
 .stat-card {
   background: var(--shell-surface);
-  border: var(--tok-border-w, 1px) solid var(--shell-border);
+  border: var(--tok-border-w, 1px) var(--tok-border-style, solid) var(--shell-border);
   border-radius: 8px;
   padding: 14px;
   position: relative;
@@ -880,6 +896,7 @@ details.section[open] > .section-body > *:nth-child(n+10) { animation-delay: 0.2
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 .field label,
 .color-field label,
@@ -914,6 +931,7 @@ details.section[open] > .section-body > *:nth-child(n+10) { animation-delay: 0.2
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+  min-width: 0;
 }
 
 /* ── Segmented toggle groups (theme, density, button shape…) ───────── */
@@ -971,15 +989,18 @@ details.section[open] > .section-body > *:nth-child(n+10) { animation-delay: 0.2
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
+  min-width: 0;
 }
 .color-field {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  min-width: 0;
 }
 .color-field.mini {
   flex: 1;
+  min-width: 0;
 }
 .color-preview-wrap {
   position: relative;
@@ -1102,11 +1123,13 @@ details.section[open] > .section-body > *:nth-child(n+10) { animation-delay: 0.2
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px 10px;
+  min-width: 0; /* grid items below don't get free rein to blow out this container */
 }
 .slider-field {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0; /* a grid item's default min-width is its content's, not 0 — override it */
 }
 .slider-field label {
   width: 38px;
@@ -1115,6 +1138,7 @@ details.section[open] > .section-body > *:nth-child(n+10) { animation-delay: 0.2
 }
 .slider-field input[type="range"] {
   flex: 1;
+  min-width: 0; /* <input type=range> has a ~130px intrinsic min-width by default */
   height: 3px;
   appearance: none;
   -webkit-appearance: none;
@@ -1374,3 +1398,76 @@ details.section[open] > .section-body > *:nth-child(n+10) { animation-delay: 0.2
 .rating-row { display: flex; gap: 3px; }
 .rating-star { transition: transform 0.15s; }
 .rating-row:hover .rating-star { transform: scale(1.08); }
+/* ════════════════════════════════════════════════
+   RESPONSIVE / MOBILE
+   The two-pane layout (fixed-width sidebar + flexible
+   canvas) is desktop-first; below these breakpoints the
+   panes stack instead of squeezing side-by-side.
+   ════════════════════════════════════════════════ */
+
+/* Short viewports (landscape phones, small laptop windows): the desktop
+   layout enforces a tall minimum height so the app never looks cramped,
+   but that same floor pushes #app taller than a short screen, forcing an
+   awkward outer scroll. Drop it once the viewport itself is the limit. */
+@media (max-height: 700px) {
+  #app {
+    min-height: 0;
+  }
+}
+
+/* Phones & narrow tablets: stack the sidebar above the canvas instead of
+   forcing a fixed 360px rail into a viewport that's often narrower than
+   that on its own. */
+@media (max-width: 760px) {
+  #app {
+    flex-direction: column;
+    height: 100dvh;
+  }
+  #sidebar {
+    width: 100%;
+    max-height: 50vh;
+    border-right: none;
+    border-bottom: 1px solid var(--shell-border);
+    animation: fadeIn 0.3s ease both;
+  }
+  #main {
+    flex: 1;
+    min-height: 0;
+    padding: 18px 16px;
+  }
+  #sh {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+}
+
+/* Small phones: tighten spacing and let a couple of grids drop to fewer
+   columns so controls stay comfortably tappable instead of cramped. */
+@media (max-width: 420px) {
+  #sh {
+    padding: 10px 12px;
+  }
+  #main {
+    padding: 14px 12px;
+  }
+  .cat-title {
+    font-size: 7.5px;
+  }
+  .color-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .slider-grid {
+    grid-template-columns: 1fr;
+  }
+  .toggle-btn {
+    font-size: 8px;
+    padding: 6px 4px;
+    letter-spacing: 0.04em;
+  }
+  .generate-btn-sub {
+    font-size: 7.5px;
+  }
+  .g2, .g3, .g4, .g5 {
+    grid-template-columns: 1fr;
+  }
+}

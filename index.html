@@ -21,7 +21,7 @@
         <div id="sh">
           <span>Design Tokens</span>
           <div class="btn-group">
-            <input type="file" id="fileInput" style="display:none" accept=".yaml,.yml" />
+            <input type="file" id="fileInput" style="display:none" accept=".yaml,.yml,.json" />
             <button id="ib">Import</button>
             <button id="ab">Apply ↵</button>
           </div>
@@ -365,6 +365,15 @@
                 <div class="slider-field"><label>Speed</label><input type="range" id="f-fx-anim-speed" min="25" max="250" value="100" /><span class="slider-val" id="sv-fx-anim-speed">100</span></div>
               </div>
               <div class="field">
+                <label>Border Style</label>
+                <div class="toggle-row" data-group="borderStyle">
+                  <button class="toggle-btn active" data-val="solid">Solid</button>
+                  <button class="toggle-btn" data-val="dashed">Dashed</button>
+                  <button class="toggle-btn" data-val="dotted">Dotted</button>
+                  <button class="toggle-btn" data-val="double">Double</button>
+                </div>
+              </div>
+              <div class="field">
                 <label>Density</label>
                 <div class="toggle-row" data-group="density">
                   <button class="toggle-btn" data-val="compact">Compact</button>
@@ -415,12 +424,10 @@
         <div id="eb"></div>
 
         <div id="export-area">
-          <div class="export-label">Export Design System</div>
-          <div class="export-btn-row">
-            <button id="exportYaml" class="export-btn">⬇ YAML</button>
-            <button id="exportCss" class="export-btn">⬇ CSS</button>
-            <button id="exportJson" class="export-btn">⬇ JSON</button>
-          </div>
+          <button id="generateZip" class="generate-btn">
+            <span class="generate-btn-label">⬇ Generate Design System</span>
+            <span class="generate-btn-sub">CSS · JSON · usage &amp; AI rules (.zip)</span>
+          </button>
         </div>
       </div>
       <!-- /SIDEBAR -->
@@ -431,6 +438,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

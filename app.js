@@ -115,6 +115,7 @@
     // Effects & motion — drives border thickness + animation-duration scaling
     // for every keyframe in style.css (see calc(Xs / var(--tok-anim-speed)))
     root.style.setProperty("--tok-border-w",   `${p.borderWidth ?? 1}px`);
+    root.style.setProperty("--tok-border-style", p.borderStyle || "solid");
     root.style.setProperty("--tok-anim-speed", p.animSpeed ?? 1);
     loadFont(p.ff); loadFont(p.fm); loadFont(p.fd);
   }
@@ -205,6 +206,7 @@
           full: 9999,
         },
         width: n("f-fx-border-width") || 1,
+        style: toggle("borderStyle", "solid"),
       },
       shadows: {
         opacity: n("f-fx-shadow-opacity") || 50,
@@ -331,6 +333,7 @@
     setToggleGroup("btnShape",      g(t,"ui","button","shape"),       "rounded");
     setToggleGroup("cardElevation", g(t,"ui","card","elevation"),     "medium");
     setToggleGroup("inputStyle",    g(t,"ui","input","style"),        "outline");
+    setToggleGroup("borderStyle",   g(t,"border","style"),            "solid");
 
     updateGradPreviews();
   }
@@ -431,6 +434,7 @@
       rXl:   g(t,"border","radius","xl")   ?? 16,
       rFull,
       borderWidth: g(t,"border","width") ?? 1,
+      borderStyle: g(t,"border","style") || "solid",
 
       cr: g(t,"ui","card","border_radius")    ?? 12,
       cp: Math.round((g(t,"ui","card","padding") ?? 16) * densityMult),
@@ -501,13 +505,15 @@
   }
   
   /* ═══════════════════════════════════════════════════════
-     EXPORT — YAML / JSON / CSS
-     All three read the exact same live state (readForm() +
-     buildParams()), so whichever format you export matches
-     what's on screen right now.
+     EXPORT — one button, one .zip
+     Generates design-system.css, design-system.json and a
+     single USAGE.md (human usage guide + AI agent rules),
+     all read from the exact same live state (readForm() +
+     buildParams()) driving the preview, then bundles them
+     with JSZip into one download.
      ═══════════════════════════════════════════════════════ */
   function downloadFile(filename, content, mime) {
-    const blob = new Blob([content], { type: mime });
+    const blob = content instanceof Blob ? content : new Blob([content], { type: mime });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
     a.href = url; a.download = filename; a.click();
@@ -520,23 +526,23 @@
     return `${name}-v${version}`;
   }
 
-  function exportYaml() {
-    const obj = readForm();
-    const yaml = jsyaml.dump(obj, { indent: 2, lineWidth: 120 });
-    downloadFile(`${exportFileBase(obj)}.tokens.yaml`, yaml, "text/yaml;charset=utf-8;");
-  }
+  async function exportDesignSystemZip() {
+    if (typeof JSZip === "undefined") {
+      throw new Error("JSZip failed to load (check your connection) — can't build the .zip.");
+    }
+    const t    = readForm();
+    const p    = buildParams(t);
+    const css  = buildDesignSystemCSS(p, t);
+    const json = JSON.stringify(t, null, 2);
+    const md   = buildUsageMarkdown(p, t);
 
-  function exportJson() {
-    const obj = readForm();
-    const json = JSON.stringify(obj, null, 2);
-    downloadFile(`${exportFileBase(obj)}.tokens.json`, json, "application/json;charset=utf-8;");
-  }
+    const zip = new JSZip();
+    zip.file("design-system.css", css);
+    zip.file("design-system.json", json);
+    zip.file("USAGE.md", md);
 
-  function exportCss() {
-    const obj = readForm();
-    const p   = buildParams(obj);
-    const css = buildDesignSystemCSS(p, obj);
-    downloadFile(`${exportFileBase(obj)}.tokens.css`, css, "text/css;charset=utf-8;");
+    const blob = await zip.generateAsync({ type: "blob" });
+    downloadFile(`${exportFileBase(t)}-design-system.zip`, blob, "application/zip");
   }
 
   /** Generates a standalone stylesheet: :root custom properties for every
@@ -632,6 +638,7 @@
 
   /* Effects & components */
   --border-width: ${px(p.borderWidth)};
+  --border-style: ${p.borderStyle};
   --anim-speed: ${p.animSpeed};
   --card-radius: ${px(p.cr)};
   --card-padding: ${px(p.cp)};
@@ -666,18 +673,18 @@ body {
 .btn-secondary { background: var(--color-secondary); color: var(--color-on-primary); }
 .btn-accent { background: var(--color-accent); color: var(--color-on-primary); }
 .btn-gradient { background: var(--gradient-neon); color: var(--color-on-primary); }
-.btn-ghost { background: transparent; color: var(--color-text-primary); border: var(--border-width) solid color-mix(in srgb, var(--color-text-primary) 30%, transparent); }
-.btn-soft { background: color-mix(in srgb, var(--color-primary) 12%, transparent); color: var(--color-primary); border: var(--border-width) solid color-mix(in srgb, var(--color-primary) 30%, transparent); }
+.btn-ghost { background: transparent; color: var(--color-text-primary); border: var(--border-width) var(--border-style) color-mix(in srgb, var(--color-text-primary) 30%, transparent); }
+.btn-soft { background: color-mix(in srgb, var(--color-primary) 12%, transparent); color: var(--color-primary); border: var(--border-width) var(--border-style) color-mix(in srgb, var(--color-primary) 30%, transparent); }
 .btn-danger { background: var(--color-error); color: var(--color-on-primary); }
 .btn-sm { padding: 5px 12px; font-size: var(--font-size-xs); }
 .btn-lg { padding: 12px 24px; font-size: var(--font-size-md); }
 .btn-pill { border-radius: var(--radius-full); }
 
 /* ── Card ───────────────────────────────────────── */
-.card { background: var(--color-surface); border: var(--border-width) solid var(--color-border); border-radius: var(--card-radius); padding: var(--card-padding); box-shadow: var(--card-shadow); }
+.card { background: var(--color-surface); border: var(--border-width) var(--border-style) var(--color-border); border-radius: var(--card-radius); padding: var(--card-padding); box-shadow: var(--card-shadow); }
 
 /* ── Inputs ─────────────────────────────────────── */
-.input { width: 100%; background: color-mix(in srgb, var(--color-text-primary) 4%, transparent); border: var(--border-width) solid var(--color-border); border-radius: var(--input-radius); padding: 10px 12px; font-family: var(--font-family-primary); font-size: var(--font-size-sm); color: var(--color-text-primary); outline: none; transition: border-color .15s, box-shadow .15s; }
+.input { width: 100%; background: color-mix(in srgb, var(--color-text-primary) 4%, transparent); border: var(--border-width) var(--border-style) var(--color-border); border-radius: var(--input-radius); padding: 10px 12px; font-family: var(--font-family-primary); font-size: var(--font-size-sm); color: var(--color-text-primary); outline: none; transition: border-color .15s, box-shadow .15s; }
 .input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent); }
 .input-error { border-color: var(--color-error); }
 .input-success { border-color: var(--color-success); }
@@ -692,10 +699,10 @@ body {
 
 /* ── Alerts ─────────────────────────────────────── */
 .alert { display: flex; align-items: flex-start; gap: 10px; border-radius: var(--radius-md); padding: 12px 14px; font-family: var(--font-family-primary); }
-.alert-info { background: color-mix(in srgb, var(--color-info) 7%, transparent); border: var(--border-width) solid color-mix(in srgb, var(--color-info) 30%, transparent); }
-.alert-success { background: color-mix(in srgb, var(--color-success) 7%, transparent); border: var(--border-width) solid color-mix(in srgb, var(--color-success) 30%, transparent); }
-.alert-warning { background: color-mix(in srgb, var(--color-warning) 7%, transparent); border: var(--border-width) solid color-mix(in srgb, var(--color-warning) 30%, transparent); }
-.alert-error { background: color-mix(in srgb, var(--color-error) 7%, transparent); border: var(--border-width) solid color-mix(in srgb, var(--color-error) 30%, transparent); }
+.alert-info { background: color-mix(in srgb, var(--color-info) 7%, transparent); border: var(--border-width) var(--border-style) color-mix(in srgb, var(--color-info) 30%, transparent); }
+.alert-success { background: color-mix(in srgb, var(--color-success) 7%, transparent); border: var(--border-width) var(--border-style) color-mix(in srgb, var(--color-success) 30%, transparent); }
+.alert-warning { background: color-mix(in srgb, var(--color-warning) 7%, transparent); border: var(--border-width) var(--border-style) color-mix(in srgb, var(--color-warning) 30%, transparent); }
+.alert-error { background: color-mix(in srgb, var(--color-error) 7%, transparent); border: var(--border-width) var(--border-style) color-mix(in srgb, var(--color-error) 30%, transparent); }
 
 /* ── Progress ───────────────────────────────────── */
 .progress { height: 6px; border-radius: var(--radius-full); background: var(--color-border); overflow: hidden; }
@@ -717,22 +724,147 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
     return rules.join("\n\n");
   }
 
+  /** Single .md shipped in the zip: a human "how to use this" guide, plus
+   *  a dedicated section written as direct instructions for an AI coding
+   *  assistant (Claude, Cursor, Copilot, …) so it can be pointed at this
+   *  file and generate UI that actually matches the system — real token
+   *  values throughout, not placeholders. */
+  function buildUsageMarkdown(p, t) {
+    const spacingRows = Object.entries(p.spacing || {})
+      .map(([k, v]) => `| \`--spacing-${k}\` | ${v}px |`)
+      .join("\n");
+
+    return `# ${p.metaName} — Design System v${p.metaVer}
+
+Generated by Style System Editor · ${new Date().toISOString().slice(0, 10)} · Author: ${p.metaAuthor}
+
+This package has three files:
+
+- **\`design-system.css\`** — every token as a CSS custom property, plus ready-made component & utility classes.
+- **\`design-system.json\`** — the same tokens as structured data, for build tools, linters, or design-tooling sync.
+- **\`USAGE.md\`** (this file) — how to use the CSS by hand, and rules for an AI agent to use it correctly.
+
+---
+
+## For developers
+
+### 1. Include the stylesheet
+
+\`\`\`html
+<link rel="stylesheet" href="design-system.css" />
+\`\`\`
+
+### 2. Reference tokens with CSS variables — never hardcode
+
+\`\`\`css
+.my-component {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-md);
+}
+\`\`\`
+
+### 3. Or use the pre-built classes directly
+
+\`\`\`html
+<button class="btn btn-primary">Primary action</button>
+<button class="btn btn-ghost btn-sm">Secondary</button>
+
+<div class="card">
+  <span class="badge badge-success">Stable</span>
+  <p class="text-md">Card content goes here.</p>
+</div>
+
+<div class="alert alert-warning">Heads up — something needs attention.</div>
+
+<input class="input" placeholder="Outline input…" />
+\`\`\`
+
+Available button variants: \`.btn-primary\` \`.btn-secondary\` \`.btn-accent\` \`.btn-gradient\` \`.btn-ghost\` \`.btn-soft\` \`.btn-danger\`, sizes \`.btn-sm\` / \`.btn-lg\`, shape override \`.btn-pill\`.
+Badges/tags: \`.badge-success\` \`.badge-warning\` \`.badge-error\` \`.badge-info\` (and \`.tag-*\` equivalents).
+Alerts: \`.alert-info\` \`.alert-success\` \`.alert-warning\` \`.alert-error\`.
+Utilities: \`.p-*\` / \`.m-*\` / \`.gap-*\` (xs–xxl), \`.rounded-*\` (sm/md/lg/xl/full), \`.shadow-*\` (sm/md/lg).
+
+### 4. Consuming the JSON
+
+\`\`\`js
+const tokens = await fetch("design-system.json").then(r => r.json());
+tokens.colors.primary; // "${p.primary}"
+\`\`\`
+
+Same shape you'd get by re-importing it into the Style System Editor.
+
+---
+
+## For an AI coding assistant
+
+If you are an AI agent generating or editing UI code for **${p.metaName}**, follow these rules exactly.
+
+1. **Never invent colors, spacing, radius, or shadow values.** Always use the CSS variables from \`design-system.css\` (or the matching class). If a value seems missing, reuse the closest existing token rather than hardcoding a new hex/px.
+2. **Prefer the pre-built component classes** (\`.btn-*\`, \`.card\`, \`.input\`, \`.badge-*\`, \`.tag-*\`, \`.alert-*\`, \`.avatar\`, \`.progress\`) over writing new component CSS from scratch. Only add new rules for a genuinely new component pattern, and build them from the same variables.
+3. **Respect the configured system-wide choices** — don't override them per-instance unless explicitly asked to deviate:
+   - Button shape: **${p.btnShape}** (\`--button-radius: ${p.btnRadius}px\`)
+   - Card elevation: **${p.cardElevation}** (\`--card-shadow\`)
+   - Input style: **${p.inputStyle}**
+   - Density: **${p.density}** — the spacing scale below is already scaled for it; don't add extra ad hoc margins on top.
+   - Border: \`${p.borderWidth}px\` \`${p.borderStyle}\` everywhere via \`--border-width\` / \`--border-style\`.
+4. **Typography**: primary UI text uses \`var(--font-family-primary)\` (${p.ff}), headings/display use \`var(--font-family-display)\` (${p.fd}), code/metadata use \`var(--font-family-secondary)\` (${p.fm}). Use the \`--font-size-*\` / \`--font-weight-*\` scale instead of arbitrary sizes.
+5. **Color usage**:
+   - \`--color-primary\` (${p.primary}) for the main call-to-action / brand accents.
+   - \`--color-accent\` (${p.accent}) for secondary emphasis (badges, highlights, gradients).
+   - \`--color-success\` / \`--color-warning\` / \`--color-error\` / \`--color-info\` strictly for status semantics — don't repurpose them decoratively.
+   - Text on a colored background (a filled button, a colored badge) should use \`--color-on-primary\` (${p.onPrimary}), not assume white.
+6. **If a requirement truly can't be met with an existing token**, say so explicitly instead of silently hardcoding a one-off value, so a human can decide whether to extend the design system.
+7. **\`design-system.json\` is the source of truth for tooling** — parse it rather than scraping this document when writing scripts, codegen, or a Figma/token sync.
+
+### Quick reference — core tokens
+
+| Token | Value |
+| --- | --- |
+| \`--color-primary\` | ${p.primary} |
+| \`--color-secondary\` | ${p.secondary} |
+| \`--color-accent\` | ${p.accent} |
+| \`--color-background\` | ${p.bg} |
+| \`--color-surface\` | ${p.surface} |
+| \`--color-border\` | ${p.border} |
+| \`--color-text-primary\` | ${p.tp} |
+| \`--color-text-secondary\` | ${p.ts} |
+| \`--color-on-primary\` | ${p.onPrimary} |
+| \`--color-success\` | ${p.ok} |
+| \`--color-warning\` | ${p.warn} |
+| \`--color-error\` | ${p.err} |
+| \`--color-info\` | ${p.info} |
+| \`--radius-sm\` / \`md\` / \`lg\` / \`xl\` | ${p.rSm}px / ${p.rMd}px / ${p.rLg}px / ${p.rXl}px |
+| \`--button-radius\` | ${p.btnRadius}px (${p.btnShape}) |
+| \`--border-width\` / \`--border-style\` | ${p.borderWidth}px / ${p.borderStyle} |
+${spacingRows}
+
+Full detail — gradients, typography scale, shadows, every raw token — is in \`design-system.css\` (as CSS variables) and \`design-system.json\` (as data).
+`;
+  }
+
   /* ═══════════════════════════════════════════════════════
-     IMPORT YAML
+     IMPORT — YAML or JSON
+     Accepts either a .yaml/.yml config (legacy export) or the
+     design-system.json from a generated .zip — both parse to
+     the same nested token shape.
      ═══════════════════════════════════════════════════════ */
   const fileInput = document.getElementById("fileInput");
   document.getElementById("ib").addEventListener("click", () => fileInput.click());
   fileInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    const isJson = /\.json$/i.test(file.name);
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        const parsed = jsyaml.load(ev.target.result);
+        const parsed = isJson ? JSON.parse(ev.target.result) : jsyaml.load(ev.target.result);
         populateForm(parsed);
         render();
       } catch(err) {
-        errorBar.textContent = "⚠ YAML Error: " + err.message;
+        errorBar.textContent = `⚠ ${isJson ? "JSON" : "YAML"} Error: ` + err.message;
         errorBar.style.display = "block";
       }
     };
@@ -836,11 +968,22 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
     void btn.offsetWidth;
     btn.classList.add("flash");
   };
-  [["exportYaml", exportYaml], ["exportCss", exportCss], ["exportJson", exportJson]].forEach(([id, fn]) => {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    btn.addEventListener("click", () => { flashBtn(btn); fn(); });
-  });
+  const generateBtn = document.getElementById("generateZip");
+  if (generateBtn) {
+    generateBtn.addEventListener("click", async () => {
+      if (generateBtn.classList.contains("generating")) return; // ignore double-clicks mid-zip
+      generateBtn.classList.add("generating");
+      try {
+        await exportDesignSystemZip();
+        flashBtn(generateBtn);
+      } catch (err) {
+        errorBar.textContent = "⚠ Export error: " + err.message;
+        errorBar.style.display = "block";
+      } finally {
+        generateBtn.classList.remove("generating");
+      }
+    });
+  }
 
   document.getElementById("ab").addEventListener("click", () => {
     const btn = document.getElementById("ab");
@@ -1079,7 +1222,7 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
     const alertHtml = alerts
       .map(
         ([c, icon, title, msg]) => `
-      <div class="alert" style="background:${alpha(c, 0.07)};border:${p.borderWidth}px solid ${alpha(c, 0.3)};border-radius:${p.rMd}px;padding:12px 14px">
+      <div class="alert" style="background:${alpha(c, 0.07)};border:${p.borderWidth}px ${p.borderStyle} ${alpha(c, 0.3)};border-radius:${p.rMd}px;padding:12px 14px">
         <div style="width:20px;height:20px;border-radius:50%;background:${alpha(c, 0.16)};color:${c};display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">${icon}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:12px;font-weight:700;color:${p.tp};${F}">${title}</div>
@@ -1100,7 +1243,7 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
         ${toasts
           .map(
             ([c, icon, title, msg]) => `
-          <div class="toast" style="background:${p.surface};border:${p.borderWidth}px solid ${p.border};border-left:3px solid ${c};border-radius:${p.rMd}px;padding:10px 12px;box-shadow:${p.shMd}">
+          <div class="toast" style="background:${p.surface};border:${p.borderWidth}px ${p.borderStyle} ${p.border};border-left:3px solid ${c};border-radius:${p.rMd}px;padding:10px 12px;box-shadow:${p.shMd}">
             <span style="color:${c};font-size:13px;flex-shrink:0">${icon}</span>
             <div style="flex:1;min-width:0">
               <div style="font-size:11px;font-weight:700;color:${p.tp};${F}">${title}</div>
@@ -1361,7 +1504,7 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
           <button style="background:${p.primary};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer;letter-spacing:0.04em;box-shadow:0 0 12px ${alpha(p.primary, 0.4)}">Primary</button>
           <button style="background:${p.accent};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer;box-shadow:0 0 12px ${alpha(p.accent, 0.4)}">Accent</button>
           <button style="background:linear-gradient(${p.gradNeon});color:#fff;border:none;border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Gradient</button>
-          <button style="background:transparent;color:${p.tp};border:${Math.max(p.borderWidth,1)}px solid ${alpha(p.tp,0.3)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;${F};cursor:pointer">Ghost</button>
+          <button style="background:transparent;color:${p.tp};border:${Math.max(p.borderWidth,1)}px ${p.borderStyle} ${alpha(p.tp,0.3)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;${F};cursor:pointer">Ghost</button>
           <button style="background:${alpha(p.primary, 0.12)};color:${p.primary};border:1px solid ${alpha(p.primary, 0.3)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Soft</button>
           <button style="background:${alpha(p.err, 0.12)};color:${p.err};border:1px solid ${alpha(p.err, 0.3)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Danger</button>
           <button style="background:${alpha(p.tp,0.04)};color:${p.tm};border:1px solid ${alpha(p.tp,0.1)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;${F};cursor:not-allowed;opacity:0.5" disabled>Disabled</button>
@@ -1573,7 +1716,7 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
     const tabs = `
       <div class="tile">
         <div class="tile-label">Tabs</div>
-        <div class="tabs" style="border-bottom:${p.borderWidth}px solid ${p.border}">
+        <div class="tabs" style="border-bottom:${p.borderWidth}px ${p.borderStyle} ${p.border}">
           ${["Design", "Code", "Usage", "Changelog"]
             .map(
               (l, i) => `<div class="tab" style="padding:8px 14px;font-size:11px;${F};font-weight:${i === 0 ? 700 : 500};color:${i === 0 ? p.primary : p.ts};border-bottom:2px solid ${i === 0 ? p.primary : "transparent"};margin-bottom:-${p.borderWidth}px">${l}</div>`,
@@ -1585,7 +1728,7 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
     const segmented = `
       <div class="tile">
         <div class="tile-label">Segmented Control</div>
-        <div class="segmented" style="border:${p.borderWidth}px solid ${p.border};border-radius:${p.rMd}px;overflow:hidden">
+        <div class="segmented" style="border:${p.borderWidth}px ${p.borderStyle} ${p.border};border-radius:${p.rMd}px;overflow:hidden">
           ${["Day", "Week", "Month"]
             .map(
               (l, i) => `<div class="seg-item" style="padding:7px 16px;font-size:11px;${F};font-weight:600;background:${i === 1 ? p.primary : "transparent"};color:${i === 1 ? p.onPrimary : p.ts}">${l}</div>`,
@@ -1598,15 +1741,15 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
       <div class="tile">
         <div class="tile-label">Pagination</div>
         <div class="pagination">
-          <div class="page-item disabled" style="padding:6px 10px;border-radius:${p.rSm}px;border:${p.borderWidth}px solid ${p.border};color:${p.tm};font-size:11px;${FM};opacity:0.5">‹ Prev</div>
+          <div class="page-item disabled" style="padding:6px 10px;border-radius:${p.rSm}px;border:${p.borderWidth}px ${p.borderStyle} ${p.border};color:${p.tm};font-size:11px;${FM};opacity:0.5">‹ Prev</div>
           ${[1, 2, 3]
             .map(
-              (n) => `<div class="page-item${n === 1 ? " active" : ""}" style="padding:6px 11px;border-radius:${p.rSm}px;border:${p.borderWidth}px solid ${n === 1 ? p.primary : p.border};background:${n === 1 ? p.primary : "transparent"};color:${n === 1 ? p.onPrimary : p.tp};font-size:11px;${FM};font-weight:700">${n}</div>`,
+              (n) => `<div class="page-item${n === 1 ? " active" : ""}" style="padding:6px 11px;border-radius:${p.rSm}px;border:${p.borderWidth}px ${p.borderStyle} ${n === 1 ? p.primary : p.border};background:${n === 1 ? p.primary : "transparent"};color:${n === 1 ? p.onPrimary : p.tp};font-size:11px;${FM};font-weight:700">${n}</div>`,
             )
             .join("")}
           <span style="color:${p.tm};font-size:11px;padding:0 2px">…</span>
-          <div class="page-item" style="padding:6px 11px;border-radius:${p.rSm}px;border:${p.borderWidth}px solid ${p.border};color:${p.tp};font-size:11px;${FM}">12</div>
-          <div class="page-item" style="padding:6px 10px;border-radius:${p.rSm}px;border:${p.borderWidth}px solid ${p.border};color:${p.tp};font-size:11px;${FM}">Next ›</div>
+          <div class="page-item" style="padding:6px 11px;border-radius:${p.rSm}px;border:${p.borderWidth}px ${p.borderStyle} ${p.border};color:${p.tp};font-size:11px;${FM}">12</div>
+          <div class="page-item" style="padding:6px 10px;border-radius:${p.rSm}px;border:${p.borderWidth}px ${p.borderStyle} ${p.border};color:${p.tp};font-size:11px;${FM}">Next ›</div>
         </div>
       </div>`;
 
@@ -1697,7 +1840,7 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
   function buildCards(p, F, FM, FD) {
     // Feature card
     const featureCard = `
-      <div style="background:${p.surface};border:${p.borderWidth}px solid ${alpha(p.primary, 0.2)};border-radius:${p.cr}px;padding:${p.cp}px;box-shadow:${p.cardShadow}">
+      <div style="background:${p.surface};border:${p.borderWidth}px ${p.borderStyle} ${alpha(p.primary, 0.2)};border-radius:${p.cr}px;padding:${p.cp}px;box-shadow:${p.cardShadow}">
         <div style="width:40px;height:40px;border-radius:${p.rMd}px;background:${alpha(p.primary, 0.15)};display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px;border:1px solid ${alpha(p.primary, 0.2)}">◈</div>
         <div style="font-size:14px;font-weight:700;color:${p.tp};${F};margin-bottom:6px">Token System</div>
         <div style="font-size:11px;color:${p.ts};${F};line-height:1.6">A unified source of truth for all design decisions across your entire product.</div>
@@ -1727,7 +1870,7 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
   
     // Profile / identity card
     const profileCard = `
-      <div style="background:${p.surface};border:${p.borderWidth}px solid ${alpha(p.accent, 0.2)};border-radius:${p.cr}px;padding:${p.cp}px;text-align:center;box-shadow:${p.cardShadow}">
+      <div style="background:${p.surface};border:${p.borderWidth}px ${p.borderStyle} ${alpha(p.accent, 0.2)};border-radius:${p.cr}px;padding:${p.cp}px;text-align:center;box-shadow:${p.cardShadow}">
         <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(${p.gradAurora});margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;${FD};box-shadow:0 0 20px ${alpha(p.accent, 0.4)}">
           ${p.metaAuthor.charAt(0).toUpperCase()}
         </div>
@@ -1794,7 +1937,7 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
         ]
           .map(
             ({ q, a, open }) => `
-          <div class="accordion-item${open ? " open" : ""}" style="border-bottom:${p.borderWidth}px solid ${p.border};padding:10px 2px">
+          <div class="accordion-item${open ? " open" : ""}" style="border-bottom:${p.borderWidth}px ${p.borderStyle} ${p.border};padding:10px 2px">
             <div class="accordion-header">
               <span style="font-size:12px;font-weight:600;color:${p.tp};${F}">${q}</span>
               <span class="accordion-chevron" style="color:${p.ts};font-size:10px">▾</span>
@@ -1816,7 +1959,7 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
           ]
             .map(
               ([icon, label, sub], i, arr) => `
-            <div class="list-item" style="padding:10px 6px;border-bottom:${i < arr.length - 1 ? p.borderWidth : 0}px solid ${p.border}">
+            <div class="list-item" style="padding:10px 6px;border-bottom:${i < arr.length - 1 ? p.borderWidth : 0}px ${p.borderStyle} ${p.border}">
               <span style="width:26px;height:26px;border-radius:${p.rMd}px;background:${alpha(p.primary, 0.1)};color:${p.primary};display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">${icon}</span>
               <div style="flex:1">
                 <div style="font-size:12px;font-weight:600;color:${p.tp};${F}">${label}</div>

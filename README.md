@@ -1,6 +1,8 @@
 # Style System Editor
 
-Um editor visual de design tokens **em tempo real**. Ajuste cores, tipografia, gradientes, sombras, espaçamento, densidade e o estilo de cada componente no painel esquerdo — o preview no painel direito atualiza instantaneamente a cada mudança, sem precisar clicar em nada. Quando o sistema estiver do jeito que você quer, exporte como **YAML**, **CSS** ou **JSON**.
+Um editor visual de design tokens **em tempo real**. Ajuste cores, tipografia, gradientes, sombras, espaçamento, densidade e o estilo de cada componente no painel esquerdo — o preview no painel direito atualiza instantaneamente a cada mudança, sem precisar clicar em nada. Quando o sistema estiver do jeito que você quer, um único botão — **Generate Design System** — baixa um `.zip` com o CSS, o JSON e um guia em Markdown (uso + regras para uma IA usar corretamente).
+
+Responsivo de ponta a ponta: abaixo de 760px o sidebar empilha sobre o preview (cada um com scroll próprio) em vez de espremer lado a lado, e abaixo de 420px os controles mais densos (sliders, cores, grids do preview) se reorganizam para caber sem cortar nada.
 
 ---
 
@@ -75,17 +77,15 @@ O painel direito renderiza automaticamente todas as seções, usando exatamente 
 | **Spacing & Border Radius**     | Régua visual dos tokens de espaçamento e raio                                    |
 | **Interaction Tokens**          | Tooltips, bloco de código com syntax highlight, atalhos de teclado               |
 
-### 3. Importar / Exportar
+### 3. Importar / Gerar
 
-- **Import** — carrega um arquivo `.yaml` ou `.yml` do disco e aplica imediatamente (restaura também os campos de Effects & Motion e Component Style).
-- **Export → YAML** — baixa a configuração completa como `nome-do-projeto-vX.Y.Z.tokens.yaml`. É o formato para reabrir depois no próprio editor.
-- **Export → JSON** — baixa a mesma configuração como `.tokens.json`, para consumir em pipelines/build tools.
-- **Export → CSS** — gera um stylesheet standalone (`.tokens.css`) com:
-  - Custom properties `:root` para cada token (cores, tipografia, espaçamento, raio, sombra, efeitos);
-  - Classes de componente prontas (`.btn`, `.btn-primary/accent/ghost/soft/danger`, `.card`, `.input`, `.badge`, `.tag`, `.alert-*`, `.progress`, `.avatar`);
-  - Utilitários de espaçamento/raio/sombra (`.p-md`, `.rounded-lg`, `.shadow-md`, etc.).
+- **Import** — carrega um arquivo `.yaml`, `.yml` ou `.json` do disco (o `design-system.json` de um zip gerado antes serve) e aplica imediatamente, restaurando inclusive Effects & Motion e Component Style.
+- **⬇ Generate Design System** — um único botão que baixa `nome-do-projeto-vX.Y.Z-design-system.zip`, com:
+  - **`design-system.css`** — custom properties `:root` para cada token (cores, tipografia, espaçamento, raio, sombra, efeitos) e classes de componente prontas (`.btn`, `.btn-primary/accent/ghost/soft/danger`, `.card`, `.input`, `.badge`, `.tag`, `.alert-*`, `.progress`, `.avatar`) + utilitários (`.p-md`, `.rounded-lg`, `.shadow-md`, etc.);
+  - **`design-system.json`** — a mesma configuração como dado estruturado, para pipelines/build tools ou para reabrir no editor depois;
+  - **`USAGE.md`** — guia de uso para desenvolvedores **e** uma seção de regras diretas para uma IA (Claude, Cursor, Copilot…) seguir ao gerar UI com esse sistema, já preenchida com os valores reais dos tokens.
 
-  O CSS exportado reflete exatamente o que está no preview no momento do export — inclusive densidade, largura de borda, velocidade de animação, formato de botão, elevação de card e estilo de input.
+  O zip reflete exatamente o que está no preview no momento — densidade, largura de borda, velocidade de animação, formato de botão, elevação de card e estilo de input inclusive.
 
 ---
 
@@ -117,6 +117,7 @@ spacing:   { xs, sm, md, lg, xl, xxl, xxxl }     # escalados pela densidade (eff
 border:
   radius: { none, sm, md, lg, xl, full }
   width:  <px>                                    # 1–6, ver Effects & Motion
+  style:  solid | dashed | dotted | double         # idem
 
 shadows:
   opacity: <10–100>    # intensidade das sombras geradas
@@ -139,7 +140,7 @@ ui:
 
 Duas seções novas no sidebar, para além das cores/tipografia/espaçamento clássicos:
 
-- **Effects & Motion** — intensidade e blur das sombras, espessura de borda global, velocidade das animações (0.25×–2.5×) e densidade (compact/comfortable/spacious, que escala toda a escala de espaçamento).
+- **Effects & Motion** — intensidade e blur das sombras, espessura **e estilo** de borda global (solid/dashed/dotted/double), velocidade das animações (0.25×–2.5×) e densidade (compact/comfortable/spacious, que escala toda a escala de espaçamento).
 - **Component Style** — formato dos botões (sharp/rounded/pill), elevação dos cards (flat/low/medium/high) e estilo dos inputs (outline/filled/underline). Essas escolhas se propagam para todos os componentes do preview em tempo real.
 
 ---
@@ -166,4 +167,5 @@ Nenhuma instalação necessária. Carregadas via CDN no `index.html`:
 
 - [js-yaml 4.1.0](https://github.com/nodeca/js-yaml) — parser de YAML
 - [Chart.js 4.4.1](https://www.chartjs.org/) — gráficos
+- [JSZip 3.10.1](https://stuk.github.io/jszip/) — monta o `.zip` gerado pelo botão Generate Design System
 - [Google Fonts](https://fonts.google.com/) — JetBrains Mono, Orbitron, Space Grotesk (+ qualquer fonte customizada digitada em Typography, carregada dinamicamente)
