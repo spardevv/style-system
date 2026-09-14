@@ -1,7 +1,7 @@
 name: Deploy to VPS
 
 # Publishes the static site (index.html, style.css, app.js) to the VPS
-# behind stylesystem.spardevsvr.com every time main is pushed. See
+# behind stylesystem.spardevsvr.online every time main is pushed. See
 # DEPLOYMENT.md for the one-time server setup and secret this needs.
 on:
   push:
@@ -13,10 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # DNS for stylesystem.spardevsvr.com isn't live yet (checked at the time
-  # this workflow was written), so this targets the server's IP directly.
-  # Once the A record resolves, you can switch this to the domain instead.
-  DEPLOY_HOST: 187.127.24.62
+  # DNS for stylesystem.spardevsvr.online is live and points at the VPS.
+  DEPLOY_HOST: stylesystem.spardevsvr.online
   DEPLOY_USER: hermes
   DEPLOY_PATH: /var/www/stylesystem
   DEPLOY_PORT: 22

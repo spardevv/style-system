@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────
-# One-time bootstrap for stylesystem.spardevsvr.com
+# One-time bootstrap for stylesystem.spardevsvr.online
 #
 # Run this ONCE, directly on the VPS, logged in as `hermes`:
 #
@@ -15,7 +15,7 @@
 # ─────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-DOMAIN="stylesystem.spardevsvr.com"
+DOMAIN="stylesystem.spardevsvr.online"
 DEPLOY_PATH="/var/www/stylesystem"
 
 # Public half of the dedicated CI deploy keypair (generated for this

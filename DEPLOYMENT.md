@@ -1,4 +1,4 @@
-# Deploy — CI/CD para stylesystem.spardevsvr.com
+# Deploy — CI/CD para stylesystem.spardevsvr.online
 
 Todo push em `main` roda [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), que sincroniza `index.html`, `style.css` e `app.js` para o VPS via `rsync` sobre SSH. Como é um site estático sem build, o deploy é só isso — sem etapa de compilação.
 
@@ -6,74 +6,51 @@ Feito o setup abaixo uma vez, todo `git push` para `main` publica sozinho.
 
 ---
 
-## O que já foi checado
+## Status
 
-- **SSH** (`hermes@187.127.24.62:22`) está aberto e acessível.
-- **Portas 80/443 estão fechadas/filtradas** — não há nginx (ou outro servidor web) respondendo ainda nesse IP.
-- **DNS de `spardevsvr.com` ainda não existe** (não resolve nem no resolver padrão nem em `8.8.8.8`). O domínio `stylesystem.spardevsvr.com` **precisa de um registro A** apontando pro IP do VPS antes de funcionar por nome.
+- ✅ **SSH** (`hermes@187.127.24.62:22`) aberto e acessível.
+- ✅ **Servidor configurado** — `deploy/setup-vps.sh` já rodou no VPS: nginx instalado, `/var/www/stylesystem` criado, portas 80/443 abertas, chave de deploy autorizada.
+- ✅ **DNS ativo** — `stylesystem.spardevsvr.online` resolve para `187.127.24.62`.
+- ✅ **Secret `DEPLOY_SSH_KEY`** configurado no GitHub.
+- ⬜ **HTTPS** — ainda não emitido (passo 3 abaixo).
 
-Ou seja: falta configurar o servidor (nginx) e o DNS. O workflow já está pronto para funcionar assim que isso existir.
+O que falta é só o certificado HTTPS; o deploy via push em `main` já funciona.
 
 ---
 
 ## Setup (uma vez só)
 
-### 1. Configurar o servidor
+### 1. Configurar o servidor ✅ feito
 
-Foi gerado um par de chaves SSH dedicado só para o deploy do GitHub Actions (não é a sua chave pessoal). O script [`deploy/setup-vps.sh`](deploy/setup-vps.sh) já vem com a chave pública embutida — ele:
-
-- instala o nginx (se não estiver instalado);
-- cria `/var/www/stylesystem` e dá posse pro usuário `hermes`;
-- escreve um server block do nginx para `stylesystem.spardevsvr.com`;
-- abre as portas 80/443 no firewall (se `ufw` estiver ativo);
-- autoriza a chave pública de deploy em `~hermes/.ssh/authorized_keys`.
-
-Rode assim (do seu computador, com acesso SSH à sua chave pessoal):
+O script [`deploy/setup-vps.sh`](deploy/setup-vps.sh) já rodou no VPS — instalou nginx, criou `/var/www/stylesystem`, escreveu o server block, abriu as portas 80/443 e autorizou a chave de deploy dedicada (não é a sua chave pessoal) em `~hermes/.ssh/authorized_keys`. É idempotente; se precisar rodar de novo (ex.: reinstalar o servidor):
 
 ```bash
-scp deploy/setup-vps.sh hermes@187.127.24.62:~/
-ssh hermes@187.127.24.62 'bash setup-vps.sh'
+curl -o setup-vps.sh https://raw.githubusercontent.com/spardevv/style-system/main/deploy/setup-vps.sh
+bash setup-vps.sh
 ```
+Rode direto numa sessão SSH interativa no servidor (não via `ssh host 'comando'` de fora) — o `sudo` precisa de terminal pra pedir a senha.
 
-O script é idempotente — pode rodar de novo sem problema.
+### 2. Apontar o DNS ✅ feito
 
-### 2. Apontar o DNS
+`stylesystem.spardevsvr.online` já resolve para `187.127.24.62`.
 
-No provedor onde `spardevsvr.com` está registrado, crie:
-
-| Tipo | Nome         | Valor            |
-| ---- | ------------ | ---------------- |
-| A    | `stylesystem`| `187.127.24.62`  |
-
-Propagação pode levar de minutos a algumas horas.
-
-### 3. HTTPS (depois que o DNS resolver)
+### 3. HTTPS — pendente
 
 ```bash
 ssh hermes@187.127.24.62
 sudo apt-get install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d stylesystem.spardevsvr.com
+sudo certbot --nginx -d stylesystem.spardevsvr.online
 ```
 
 O certbot já reconfigura o nginx para redirecionar HTTP → HTTPS automaticamente.
 
-### 4. Adicionar o secret no GitHub
+### 4. Secret no GitHub ✅ feito
 
-O workflow precisa da **chave privada** do par gerado para o deploy (`DEPLOY_SSH_KEY`). Ela não está no repositório — foi entregue separadamente no chat que gerou este setup. Adicione em:
+`DEPLOY_SSH_KEY` já está em **Settings → Secrets and variables → Actions** com a chave privada do par de deploy.
 
-**Settings → Secrets and variables → Actions → New repository secret**
+Host, usuário e caminho (`stylesystem.spardevsvr.online`, `hermes`, `/var/www/stylesystem`) estão fixos no workflow como `env:` — não são segredos, mas dá pra mudá-los direto no `deploy.yml` se o servidor mudar.
 
-| Secret           | Valor                                                    |
-| ---------------- | --------------------------------------------------------- |
-| `DEPLOY_SSH_KEY` | Conteúdo completo da chave privada (bloco `-----BEGIN OPENSSH PRIVATE KEY-----` … `-----END OPENSSH PRIVATE KEY-----`) |
-
-Host, usuário e caminho (`187.127.24.62`, `hermes`, `/var/www/stylesystem`) já estão fixos no workflow como `env:` — não são segredos, mas dá pra mudá-los direto no `deploy.yml` se o servidor mudar.
-
-> Se preferir gerar sua própria chave em vez de usar a que veio pronta, é só:
-> ```bash
-> ssh-keygen -t ed25519 -C "github-actions-deploy@style-system" -f deploy_key -N ""
-> ```
-> aí adiciona `deploy_key.pub` no `authorized_keys` do `hermes` e o conteúdo de `deploy_key` (a privada) no secret `DEPLOY_SSH_KEY`.
+> Se precisar trocar a chave de deploy: gere um novo par (`ssh-keygen -t ed25519 -C "github-actions-deploy@style-system" -f deploy_key -N ""`), atualize `DEPLOY_PUBKEY` em `deploy/setup-vps.sh`, rode o script de novo no servidor, e troque o valor do secret `DEPLOY_SSH_KEY` pela nova privada.
 
 ---
 
@@ -85,7 +62,7 @@ Depois do secret configurado:
 git push origin main
 ```
 
-ou dispare manualmente em **Actions → Deploy to VPS → Run workflow**. Acompanhe o log — o último passo é o `rsync`; se passar, o site já está no ar (por IP direto enquanto o DNS não resolve: `http://187.127.24.62/`, desde que o `Host` header bata, então melhor testar já com `curl -H "Host: stylesystem.spardevsvr.com" http://187.127.24.62/` até o DNS propagar).
+ou dispare manualmente em **Actions → Deploy to VPS → Run workflow**. Acompanhe o log — o último passo é o `rsync`; se passar, o site já está no ar em [stylesystem.spardevsvr.online](http://stylesystem.spardevsvr.online) (HTTP até o certificado sair — passo 3 acima).
 
 ---
 
