@@ -258,6 +258,7 @@
       const target = row.querySelector(`.toggle-btn[data-val="${val || fallback}"]`) || row.querySelector(`.toggle-btn[data-val="${fallback}"]`);
       row.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
       if (target) target.classList.add("active");
+      if (typeof placeIndicator === "function") placeIndicator(row);
     };
 
     setToggleGroup("theme", (g(t,"theme") || "light").toLowerCase(), "light");
@@ -795,14 +796,19 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
       }
     });
   
-    // Sliders → display labels
+    // Sliders → display labels (with a small tactile "pulse" on the value)
     document.querySelectorAll("input[type=range]").forEach(slider => {
       const valEl = document.getElementById("sv-" + slider.id.replace("f-",""));
       if (valEl) {
-        slider.addEventListener("input", () => { valEl.textContent = slider.value; });
+        slider.addEventListener("input", () => {
+          valEl.textContent = slider.value;
+          valEl.classList.add("pulse");
+          clearTimeout(valEl._pulseT);
+          valEl._pulseT = setTimeout(() => valEl.classList.remove("pulse"), 180);
+        });
       }
     });
-  
+
     // Scoped toggle groups (theme, density, button shape, card elevation, input style…)
     // Each group clears only its own .toggle-row siblings, so independent groups
     // don't clobber each other's selection.
@@ -811,6 +817,7 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
         const row = btn.closest(".toggle-row") || document;
         row.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
+        placeIndicator(row);
       });
     });
   
@@ -870,11 +877,113 @@ ${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: va
   }
 
   /* ═══════════════════════════════════════════════════════
+     SIDEBAR ANIMATIONS
+     Two pieces of interaction polish for the token-form menu:
+       1. Accordion — smooth height expand/collapse for each
+          collapsible <details class="section">, replacing the
+          native instant show/hide, via the Web Animations API.
+       2. Sliding "pill" indicator behind whichever .toggle-btn is
+          active in a .toggle-row, so switching options (theme,
+          density, button shape…) feels tactile instead of an
+          instant color swap.
+     ═══════════════════════════════════════════════════════ */
+  class Accordion {
+    constructor(el) {
+      this.el = el;
+      this.summary = el.querySelector(":scope > summary");
+      this.body = el.querySelector(":scope > .section-body");
+      this.animation = null;
+      this.isClosing = false;
+      this.isExpanding = false;
+      this.summary.addEventListener("click", (e) => this.onClick(e));
+    }
+    onClick(e) {
+      e.preventDefault();
+      this.el.style.overflow = "hidden";
+      if (this.isClosing || !this.el.open) {
+        this.open();
+      } else if (this.isExpanding || this.el.open) {
+        this.shrink();
+      }
+    }
+    shrink() {
+      this.isClosing = true;
+      const startHeight = `${this.el.offsetHeight}px`;
+      const endHeight = `${this.summary.offsetHeight}px`;
+      if (this.animation) this.animation.cancel();
+      this.animation = this.el.animate(
+        { height: [startHeight, endHeight] },
+        { duration: 260, easing: "cubic-bezier(0.16,1,0.3,1)" },
+      );
+      this.animation.onfinish = () => this.onFinish(false);
+      this.animation.oncancel = () => { this.isClosing = false; };
+    }
+    open() {
+      this.el.style.height = `${this.el.offsetHeight}px`;
+      this.el.open = true;
+      placeIndicatorsWithin(this.el);
+      window.requestAnimationFrame(() => this.expand());
+    }
+    expand() {
+      this.isExpanding = true;
+      const startHeight = `${this.el.offsetHeight}px`;
+      const endHeight = `${this.summary.offsetHeight + this.body.offsetHeight}px`;
+      if (this.animation) this.animation.cancel();
+      this.animation = this.el.animate(
+        { height: [startHeight, endHeight] },
+        { duration: 320, easing: "cubic-bezier(0.16,1,0.3,1)" },
+      );
+      this.animation.onfinish = () => this.onFinish(true);
+      this.animation.oncancel = () => { this.isExpanding = false; };
+    }
+    onFinish(open) {
+      this.el.open = open;
+      this.animation = null;
+      this.isClosing = false;
+      this.isExpanding = false;
+      this.el.style.height = this.el.style.overflow = "";
+      if (open) placeIndicatorsWithin(this.el);
+    }
+  }
+  function initAccordions() {
+    // Skip if the browser lacks Element.animate (very old browsers) —
+    // <details>/<summary> still works natively, just without the glide.
+    if (typeof Element === "undefined" || !Element.prototype.animate) return;
+    document.querySelectorAll("#token-form details.section").forEach((el) => new Accordion(el));
+  }
+
+  /** Position & size the sliding indicator for one .toggle-row. Widths are
+   *  0 while the row's ancestor <details> is collapsed, so callers re-run
+   *  this once a section actually opens (see Accordion above). */
+  function placeIndicator(row) {
+    let indicator = row.querySelector(":scope > .toggle-indicator");
+    if (!indicator) {
+      indicator = document.createElement("span");
+      indicator.className = "toggle-indicator";
+      row.prepend(indicator);
+    }
+    const active = row.querySelector(".toggle-btn.active");
+    if (!active || active.offsetWidth === 0) {
+      indicator.style.opacity = "0";
+      return;
+    }
+    indicator.style.opacity = "1";
+    indicator.style.width = `${active.offsetWidth}px`;
+    indicator.style.transform = `translateX(${active.offsetLeft}px)`;
+  }
+  function placeIndicatorsWithin(scope) {
+    (scope || document).querySelectorAll(".toggle-row").forEach(placeIndicator);
+  }
+
+  /* ═══════════════════════════════════════════════════════
      BOOT
      ═══════════════════════════════════════════════════════ */
   initFormBindings();
   updateGradPreviews();
+  initAccordions();
   render();
+  requestAnimationFrame(() => placeIndicatorsWithin(document)); // only open-by-default sections have real widths yet
+  window.addEventListener("resize", debounce(() => placeIndicatorsWithin(document), 120));
   
   /* ── SECTION HELPERS ──────────────────────────────── */
   function sec(title, body) {

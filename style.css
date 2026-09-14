@@ -39,6 +39,11 @@
   /* Effects & motion — populated by JS from the Effects & Motion panel */
   --tok-border-w:       1px;
   --tok-anim-speed:     1;
+
+  /* Fluid easing used across the sidebar's own interactions (accordion,
+     toggle groups, hovers) — a snappy "ease-out-expo" feel. */
+  --ease-fluid:      cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-fluid-soft: cubic-bezier(0.25, 0.8, 0.35, 1);
 }
 
 /* scanline overlay (only visible when --scanline-opacity > 0) */
@@ -131,7 +136,7 @@ body {
   font-size: 10px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s, box-shadow 0.2s;
+  transition: opacity 0.2s var(--ease-fluid-soft), transform 0.25s var(--ease-fluid), box-shadow 0.25s var(--ease-fluid-soft), border-color 0.2s var(--ease-fluid-soft);
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -148,11 +153,13 @@ body {
 }
 #ab:hover {
   opacity: 0.85;
-  box-shadow: 0 2px 20px color-mix(in srgb, var(--shell-accent) 60%, transparent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--shell-accent) 60%, transparent);
 }
 #ib:hover {
   color: var(--shell-text);
   border-color: var(--shell-accent);
+  transform: translateY(-1px);
 }
 #ab:active,
 #ib:active {
@@ -776,6 +783,10 @@ body {
 /* ── Collapsible section ────────────────────── */
 .section {
   border-bottom: 1px solid var(--shell-border);
+  /* Height is driven by JS (see Accordion in app.js) via the Web
+     Animations API for a smooth expand/collapse instead of the native
+     instant show/hide. `overflow` is toggled to hidden only while that
+     animation runs, so focus outlines etc. aren't clipped at rest. */
 }
 .section-title {
   display: flex;
@@ -792,11 +803,27 @@ body {
   user-select: none;
   list-style: none;
   background: var(--shell-surface-3);
-  transition: background 0.15s, color 0.15s;
+  position: relative;
+  transition: background 0.2s var(--ease-fluid-soft), color 0.2s var(--ease-fluid-soft), padding-left 0.25s var(--ease-fluid);
 }
 .section-title:hover {
   background: var(--shell-surface-2);
   color: var(--shell-text);
+  padding-left: 18px;
+}
+.section-title::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--shell-accent);
+  transform: scaleY(0);
+  transition: transform 0.25s var(--ease-fluid);
+  transform-origin: center;
+}
+.section-title:hover::before,
+details[open] > .section-title::before {
+  transform: scaleY(1);
 }
 .section-title::marker,
 .section-title::-webkit-details-marker { display: none; }
@@ -804,7 +831,7 @@ body {
   content: "›";
   margin-left: auto;
   font-size: 13px;
-  transition: transform 0.2s;
+  transition: transform 0.3s var(--ease-fluid);
   color: var(--shell-text-muted);
 }
 details[open] > .section-title::after {
@@ -813,6 +840,11 @@ details[open] > .section-title::after {
 .section-icon {
   font-size: 11px;
   color: var(--shell-accent);
+  display: inline-block;
+  transition: transform 0.3s var(--ease-fluid);
+}
+.section-title:hover .section-icon {
+  transform: scale(1.15);
 }
 
 .section-body {
@@ -822,6 +854,26 @@ details[open] > .section-title::after {
   gap: 10px;
   background: var(--shell-surface);
 }
+
+/* Staggered reveal of a section's fields each time it springs open
+   (retriggers because the JS accordion re-adds [open] fresh on expand). */
+@keyframes fieldReveal {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+details.section[open] > .section-body > * {
+  animation: fieldReveal 0.32s var(--ease-fluid) both;
+}
+details.section[open] > .section-body > *:nth-child(1)  { animation-delay: 0.02s; }
+details.section[open] > .section-body > *:nth-child(2)  { animation-delay: 0.05s; }
+details.section[open] > .section-body > *:nth-child(3)  { animation-delay: 0.08s; }
+details.section[open] > .section-body > *:nth-child(4)  { animation-delay: 0.11s; }
+details.section[open] > .section-body > *:nth-child(5)  { animation-delay: 0.14s; }
+details.section[open] > .section-body > *:nth-child(6)  { animation-delay: 0.17s; }
+details.section[open] > .section-body > *:nth-child(7)  { animation-delay: 0.20s; }
+details.section[open] > .section-body > *:nth-child(8)  { animation-delay: 0.23s; }
+details.section[open] > .section-body > *:nth-child(9)  { animation-delay: 0.26s; }
+details.section[open] > .section-body > *:nth-child(n+10) { animation-delay: 0.29s; }
 
 /* ── Generic field ──────────────────────────── */
 .field {
@@ -849,13 +901,13 @@ details[open] > .section-title::after {
   font-family: 'JetBrains Mono', monospace;
   color: var(--shell-text);
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.2s var(--ease-fluid-soft), box-shadow 0.25s var(--ease-fluid-soft);
   width: 100%;
 }
 .field input[type="text"]:focus,
 .field input[type="number"]:focus {
   border-color: var(--shell-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--shell-accent) 15%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--shell-accent) 15%, transparent);
 }
 
 .field-row {
@@ -864,15 +916,34 @@ details[open] > .section-title::after {
   gap: 8px;
 }
 
-/* ── Theme toggle ───────────────────────────── */
+/* ── Segmented toggle groups (theme, density, button shape…) ───────── */
 .toggle-row {
   display: flex;
   gap: 0;
   border-radius: 5px;
   overflow: hidden;
   border: 1px solid var(--shell-border);
+  position: relative;
+}
+/* Sliding "pill" behind the active button — sized & positioned by
+   initToggleIndicators()/placeIndicator() in app.js, animated with a
+   fluid spring-like easing so switching options feels tactile. */
+.toggle-indicator {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  background: var(--shell-accent);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--shell-accent) 45%, transparent);
+  opacity: 0;
+  transition: transform 0.4s var(--ease-fluid), width 0.4s var(--ease-fluid), opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 0;
 }
 .toggle-btn {
+  position: relative;
+  z-index: 1;
   flex: 1;
   padding: 6px 8px;
   font-size: 9px;
@@ -883,15 +954,16 @@ details[open] > .section-title::after {
   color: var(--shell-text-muted);
   border: none;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: color 0.3s var(--ease-fluid), transform 0.15s var(--ease-fluid);
 }
 .toggle-btn.active {
-  background: var(--shell-accent);
   color: #fff;
 }
 .toggle-btn:not(.active):hover {
-  background: var(--shell-surface-2);
   color: var(--shell-text);
+}
+.toggle-btn:active {
+  transform: scale(0.94);
 }
 
 /* ── Color field ────────────────────────────── */
@@ -941,10 +1013,15 @@ details[open] > .section-title::after {
   border-radius: inherit;
   border: 1px solid rgba(0,0,0,0.08);
   pointer-events: none;
-  transition: transform 0.15s;
+  transition: transform 0.3s var(--ease-fluid), box-shadow 0.3s var(--ease-fluid-soft);
 }
 .color-preview-wrap:hover .color-preview {
-  transform: scale(0.92);
+  transform: scale(0.9) rotate(-4deg);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+}
+.color-preview-wrap:active .color-preview {
+  transform: scale(0.82) rotate(0deg);
+  transition-duration: 0.1s;
 }
 .color-field label {
   font-size: 7.5px;
@@ -1045,6 +1122,7 @@ details[open] > .section-title::after {
   border-radius: 2px;
   outline: none;
   cursor: pointer;
+  transition: background 0.2s var(--ease-fluid-soft);
 }
 .slider-field input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -1053,12 +1131,29 @@ details[open] > .section-title::after {
   border-radius: 50%;
   background: var(--shell-accent);
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.25s var(--ease-fluid), box-shadow 0.25s var(--ease-fluid);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--shell-accent) 20%, transparent);
 }
 .slider-field input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.25);
+  transform: scale(1.3);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--shell-accent) 25%, transparent);
+}
+.slider-field input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.5);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--shell-accent) 30%, transparent);
+}
+.slider-field input[type="range"]::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--shell-accent);
+  cursor: pointer;
+  border: none;
+  transition: transform 0.25s var(--ease-fluid), box-shadow 0.25s var(--ease-fluid);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--shell-accent) 20%, transparent);
+}
+.slider-field input[type="range"]:hover::-moz-range-thumb {
+  transform: scale(1.3);
 }
 .slider-val {
   font-size: 9px;
@@ -1067,6 +1162,12 @@ details[open] > .section-title::after {
   width: 22px;
   text-align: right;
   flex-shrink: 0;
+  display: inline-block;
+  transition: transform 0.2s var(--ease-fluid);
+}
+.slider-val.pulse {
+  transform: scale(1.35);
+  color: var(--shell-accent);
 }
 
 /* ══════════════════════════════════════════════════

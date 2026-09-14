@@ -1,0 +1,50 @@
+name: Deploy to VPS
+
+# Publishes the static site (index.html, style.css, app.js) to the VPS
+# behind stylesystem.spardevsvr.com every time main is pushed. See
+# DEPLOYMENT.md for the one-time server setup and secret this needs.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {} # lets you trigger a redeploy manually from the Actions tab
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+env:
+  # DNS for stylesystem.spardevsvr.com isn't live yet (checked at the time
+  # this workflow was written), so this targets the server's IP directly.
+  # Once the A record resolves, you can switch this to the domain instead.
+  DEPLOY_HOST: 187.127.24.62
+  DEPLOY_USER: hermes
+  DEPLOY_PATH: /var/www/stylesystem
+  DEPLOY_PORT: 22
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Trust the server's host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "$DEPLOY_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Sync files to the VPS
+        run: |
+          rsync -avz --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.claude/' \
+            --exclude='deploy/' \
+            --exclude='*.md' \
+            -e "ssh -p $DEPLOY_PORT" \
+            ./ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
