@@ -35,6 +35,10 @@
   --shell-error-text:   #c0392b;
   --shell-error-border: #f5c6c6;
   --scanline-opacity:   0;          /* 0 = off for light; JS sets to 0.03 for dark */
+
+  /* Effects & motion — populated by JS from the Effects & Motion panel */
+  --tok-border-w:       1px;
+  --tok-anim-speed:     1;
 }
 
 /* scanline overlay (only visible when --scanline-opacity > 0) */
@@ -186,26 +190,45 @@ body {
   border-top: 1px solid var(--shell-border);
 }
 
-#exportYaml {
+.export-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--shell-text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 8px;
+}
+
+.export-btn-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.export-btn {
   width: 100%;
   background: transparent;
   color: var(--shell-text-muted);
   border: 1px solid var(--shell-border);
   border-radius: 4px;
-  padding: 8px;
+  padding: 8px 4px;
   font-size: 10px;
   cursor: pointer;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
-#exportYaml:hover {
-  color: var(--shell-text);
+.export-btn:hover {
+  color: #fff;
+  background: var(--shell-accent);
   border-color: var(--shell-accent);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--shell-accent) 20%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--shell-accent) 40%, transparent);
 }
+.export-btn:active { transform: scale(0.96); }
+.export-btn.flash { animation: border-glow 0.5s ease; }
 
 /* ── MAIN CANVAS ────────────────────────────────── */
 #main {
@@ -261,7 +284,7 @@ body {
   background: var(--shell-surface);
   border-radius: 8px;
   padding: 14px;
-  border: 1px solid var(--shell-border);
+  border: var(--tok-border-w, 1px) solid var(--shell-border);
   overflow: hidden;
   position: relative;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -287,7 +310,7 @@ body {
   padding: 10px 14px;
   background: var(--shell-surface);
   border-radius: 6px;
-  border: 1px solid var(--shell-border);
+  border: var(--tok-border-w, 1px) solid var(--shell-border);
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -303,7 +326,7 @@ body {
 /* ── GRADIENT TILE ──────────────────────────────── */
 .grad-tile {
   border-radius: 8px;
-  border: 1px solid var(--shell-border);
+  border: var(--tok-border-w, 1px) solid var(--shell-border);
   overflow: hidden;
   aspect-ratio: 16/9;
   position: relative;
@@ -315,7 +338,7 @@ body {
 }
 .grad-tile.animated-grad {
   background-size: 200% 200% !important;
-  animation: gradient-shift 4s ease infinite;
+  animation: gradient-shift calc(4s / var(--tok-anim-speed, 1)) ease infinite;
 }
 
 /* ── SHADOW SWATCH ──────────────────────────────── */
@@ -323,7 +346,7 @@ body {
   background: var(--shell-surface);
   border-radius: 8px;
   padding: 14px;
-  border: 1px solid var(--shell-border);
+  border: var(--tok-border-w, 1px) solid var(--shell-border);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -336,7 +359,7 @@ body {
 /* ── MINI SCREEN ────────────────────────────────── */
 .mini-screen {
   border-radius: 8px;
-  border: 1px solid var(--shell-border);
+  border: var(--tok-border-w, 1px) solid var(--shell-border);
   overflow: hidden;
   background: var(--shell-surface);
 }
@@ -369,7 +392,7 @@ body {
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  animation: float 3.5s ease-in-out infinite;
+  animation: float calc(3.5s / var(--tok-anim-speed, 1)) ease-in-out infinite;
 }
 
 /* ── INPUT SPECIMEN ─────────────────────────────── */
@@ -454,7 +477,7 @@ body {
 .banner-comp {
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--shell-border);
+  border: var(--tok-border-w, 1px) solid var(--shell-border);
   position: relative;
 }
 
@@ -481,7 +504,7 @@ body {
 .window-comp {
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--shell-border);
+  border: var(--tok-border-w, 1px) solid var(--shell-border);
   background: var(--shell-surface);
 }
 .window-titlebar {
@@ -555,7 +578,7 @@ body {
 /* ── STAT CARD ──────────────────────────────────── */
 .stat-card {
   background: var(--shell-surface);
-  border: 1px solid var(--shell-border);
+  border: var(--tok-border-w, 1px) solid var(--shell-border);
   border-radius: 8px;
   padding: 14px;
   position: relative;
@@ -687,14 +710,14 @@ body {
     transparent 70%
   );
   background-size: 200% 100%;
-  animation: shimmer 2.8s linear infinite;
+  animation: shimmer calc(2.8s / var(--tok-anim-speed, 1)) linear infinite;
   border-radius: inherit;
   pointer-events: none;
 }
 
 /* ── Status dot ─────────────────────────────────── */
 .status-dot {
-  animation: pulse-dot 2s ease-in-out infinite;
+  animation: pulse-dot calc(2s / var(--tok-anim-speed, 1)) ease-in-out infinite;
 }
 
 /* ── Notification slide ─────────────────────────── */
@@ -720,10 +743,10 @@ body {
 #ab.flash { animation: border-glow 0.4s ease; }
 
 /* ── Mini dot blink ─────────────────────────────── */
-.mini-dot-live { animation: pulse-dot 1.6s ease-in-out infinite; }
+.mini-dot-live { animation: pulse-dot calc(1.6s / var(--tok-anim-speed, 1)) ease-in-out infinite; }
 
 /* ── Neon glow text ─────────────────────────────── */
-.neon-text { animation: neon-flicker 6s ease-in-out infinite; }
+.neon-text { animation: neon-flicker calc(6s / var(--tok-anim-speed, 1)) ease-in-out infinite; }
 
 /* ── Pixel reveal text ──────────────────────────── */
 .pixel-reveal { animation: pixel-reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
@@ -1045,3 +1068,208 @@ details[open] > .section-title::after {
   text-align: right;
   flex-shrink: 0;
 }
+
+/* ══════════════════════════════════════════════════
+   EXTRA PREVIEW COMPONENTS
+   (colors/radii/shadows are inlined per-token by JS;
+   these rules only carry structure + motion)
+   ══════════════════════════════════════════════════ */
+
+/* ── Alert ──────────────────────────────────────── */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  animation: fadeUp 0.35s ease both;
+}
+
+/* ── Toast stack ────────────────────────────────── */
+.toast-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slide-in-left 0.35s ease both;
+}
+.toast:nth-child(1) { animation-delay: 0.05s; }
+.toast:nth-child(2) { animation-delay: 0.15s; }
+.toast:nth-child(3) { animation-delay: 0.25s; }
+
+/* ── Navbar ─────────────────────────────────────── */
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.nav-link {
+  cursor: pointer;
+  transition: color 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+.nav-link:hover { opacity: 0.75; }
+
+/* ── Tabs ───────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+}
+.tab {
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+/* ── Segmented control ──────────────────────────── */
+.segmented {
+  display: inline-flex;
+  width: fit-content;
+}
+.seg-item {
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+
+/* ── Pagination ─────────────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.page-item {
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.page-item:hover:not(.active):not(.disabled) {
+  border-color: var(--shell-border-hi);
+}
+
+/* ── Select box ─────────────────────────────────── */
+.select-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* ── Radio group ────────────────────────────────── */
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+}
+.radio-dot-outer {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+.radio-dot-inner {
+  border-radius: 50%;
+  transition: transform 0.15s;
+}
+
+/* ── Range slider preview ───────────────────────── */
+.range-demo-track {
+  position: relative;
+  border-radius: 3px;
+}
+.range-demo-fill {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  border-radius: 3px;
+}
+.range-demo-thumb {
+  position: absolute;
+  top: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.range-demo-thumb:hover { transform: translate(-50%, -50%) scale(1.15); }
+
+/* ── Search input ───────────────────────────────── */
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* ── File dropzone ──────────────────────────────── */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+/* ── Accordion ──────────────────────────────────── */
+.accordion-item { overflow: hidden; }
+.accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+.accordion-chevron { transition: transform 0.2s; }
+.accordion-item.open .accordion-chevron { transform: rotate(180deg); }
+.accordion-body { animation: fadeUp 0.25s ease both; }
+
+/* ── List group ─────────────────────────────────── */
+.list-group { display: flex; flex-direction: column; }
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+/* ── Testimonial ────────────────────────────────── */
+.testimonial-quote { position: relative; }
+
+/* ── Empty state ────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* ── Skeleton loader ─────────────────────────────── */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+  background-size: 200% 100%;
+  animation: shimmer calc(1.4s / var(--tok-anim-speed, 1)) linear infinite;
+}
+
+/* ── Rating stars ───────────────────────────────── */
+.rating-row { display: flex; gap: 3px; }
+.rating-star { transition: transform 0.15s; }
+.rating-row:hover .rating-star { transform: scale(1.08); }

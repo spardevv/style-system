@@ -9,6 +9,29 @@
     catch { return "65,105,225"; }
   }
   function alpha(hex, a) { return `rgba(${hex2rgb(hex)},${a})`; }
+
+  /** Chrome (bg/border/radius) for an input wrapper, honoring the
+   *  Component Style → Input Style setting (outline / filled / underline)
+   *  across its interaction states. */
+  function inputWrapStyle(p, tint, state) {
+    const style = p.inputStyle || "outline";
+    const bw = state === "focus" ? Math.max(p.borderWidth, 1) + 0.5 : p.borderWidth;
+    if (style === "filled") {
+      const bg = state === "disabled" ? alpha(p.tp, 0.03) : alpha(tint, state === "focus" ? 0.16 : 0.09);
+      const border = state === "focus" ? `1px solid ${tint}` : `1px solid transparent`;
+      const glow = state === "focus" ? `;box-shadow:0 0 0 3px ${alpha(tint, 0.15)}` : "";
+      return `background:${bg};border:${border};border-radius:${p.ir}px${glow}`;
+    }
+    if (style === "underline") {
+      const border = state === "focus" ? `2px solid ${tint}` : `${bw}px solid ${alpha(tint, state === "disabled" ? 0.15 : 0.4)}`;
+      return `background:transparent;border:none;border-bottom:${border};border-radius:0`;
+    }
+    // outline (default)
+    const border = state === "focus" ? `${bw}px solid ${tint}` : `${bw}px solid ${alpha(tint, state === "disabled" ? 0.08 : 0.18)}`;
+    const glow = state === "focus" ? `;box-shadow:0 0 0 3px ${alpha(tint, 0.12)}` : "";
+    const bg = state === "disabled" ? alpha(p.tp, 0.02) : alpha(p.tp, 0.04);
+    return `background:${bg};border:${border};border-radius:${p.ir}px${glow}`;
+  }
   
   /* ═══════════════════════════════════════════════════════
      FONT LOADER
@@ -32,16 +55,24 @@
   function applyTokensToUI(p) {
     const root = document.documentElement;
     const isDark = p.themeMode === "dark";
+    // NOTE: the sidebar/editor chrome intentionally uses its own fixed
+    // light/dark palette here — NOT p.bg/p.surface/p.tp/p.ts/p.tm. Those
+    // represent the design system being previewed (always has a value,
+    // defaulting to a light-friendly navy), so letting them leak into the
+    // tool's own chrome made the Dark theme-mode toggle unreadable (dark
+    // editor background + light-preset navy text). Only the brand accent
+    // (--shell-accent) is deliberately synced below, for a live touch of
+    // "this tool reflects your primary color" without breaking contrast.
     if (isDark) {
-      root.style.setProperty("--shell-bg",           p.bg      || "#06060f");
-      root.style.setProperty("--shell-surface",      p.surface || "#0e0e20");
+      root.style.setProperty("--shell-bg",           "#06060f");
+      root.style.setProperty("--shell-surface",      "#0e0e20");
       root.style.setProperty("--shell-surface-2",    "#09091a");
       root.style.setProperty("--shell-surface-3",    "#141430");
       root.style.setProperty("--shell-border",       "#1a1a3a");
       root.style.setProperty("--shell-border-hi",    "#252555");
-      root.style.setProperty("--shell-text",         p.tp      || "#d0d0ff");
-      root.style.setProperty("--shell-text-sec",     p.ts      || "#7070b8");
-      root.style.setProperty("--shell-text-muted",   p.tm      || "#454580");
+      root.style.setProperty("--shell-text",         "#d0d0ff");
+      root.style.setProperty("--shell-text-sec",     "#7070b8");
+      root.style.setProperty("--shell-text-muted",   "#454580");
       root.style.setProperty("--shell-editor-bg",    "#030308");
       root.style.setProperty("--shell-editor-text",  "#8090c8");
       root.style.setProperty("--shell-scrollbar",    "#252555");
@@ -50,15 +81,15 @@
       root.style.setProperty("--shell-error-border", "#2a1020");
       root.style.setProperty("--scanline-opacity",   "0.03");
     } else {
-      root.style.setProperty("--shell-bg",           p.bg      || "#f0f4ff");
-      root.style.setProperty("--shell-surface",      p.surface || "#ffffff");
+      root.style.setProperty("--shell-bg",           "#f0f4ff");
+      root.style.setProperty("--shell-surface",      "#ffffff");
       root.style.setProperty("--shell-surface-2",    "#e8eeff");
       root.style.setProperty("--shell-surface-3",    "#f5f8ff");
       root.style.setProperty("--shell-border",       "#c8d4f0");
       root.style.setProperty("--shell-border-hi",    "#a0b4e0");
-      root.style.setProperty("--shell-text",         p.tp      || "#1e2a4a");
-      root.style.setProperty("--shell-text-sec",     p.ts      || "#4a5878");
-      root.style.setProperty("--shell-text-muted",   p.tm      || "#7a8aaa");
+      root.style.setProperty("--shell-text",         "#1e2a4a");
+      root.style.setProperty("--shell-text-sec",     "#4a5878");
+      root.style.setProperty("--shell-text-muted",   "#7a8aaa");
       root.style.setProperty("--shell-editor-bg",    "#f5f8ff");
       root.style.setProperty("--shell-editor-text",  "#3a4a70");
       root.style.setProperty("--shell-scrollbar",    "#c0cce8");
@@ -73,11 +104,18 @@
     root.style.setProperty("--tok-secondary",  p.secondary);
     root.style.setProperty("--tok-bg",         p.bg);
     root.style.setProperty("--tok-surface",    p.surface);
+    root.style.setProperty("--tok-border",     p.border);
+    root.style.setProperty("--tok-neutral",    p.neutral);
     root.style.setProperty("--tok-text-pri",   p.tp);
     root.style.setProperty("--tok-text-sec",   p.ts);
     root.style.setProperty("--tok-text-muted", p.tm);
+    root.style.setProperty("--tok-on-primary", p.onPrimary);
     root.style.setProperty("--tok-ff", `'${p.ff}', sans-serif`);
     root.style.setProperty("--tok-fm", `'${p.fm}', monospace`);
+    // Effects & motion — drives border thickness + animation-duration scaling
+    // for every keyframe in style.css (see calc(Xs / var(--tok-anim-speed)))
+    root.style.setProperty("--tok-border-w",   `${p.borderWidth ?? 1}px`);
+    root.style.setProperty("--tok-anim-speed", p.animSpeed ?? 1);
     loadFont(p.ff); loadFont(p.fm); loadFont(p.fd);
   }
   
@@ -89,11 +127,13 @@
   function readForm() {
     const v  = (id) => document.getElementById(id)?.value || "";
     const n  = (id) => parseFloat(document.getElementById(id)?.value) || 0;
-    const themeMode = document.querySelector(".toggle-btn.active")?.dataset.val || "light";
-  
+    const toggle = (group, fallback) =>
+      document.querySelector(`.toggle-row[data-group="${group}"] .toggle-btn.active`)?.dataset.val || fallback;
+    const themeMode = toggle("theme", "light");
+
     const gradStr = (degId, aId, bId) =>
       `${n(degId)}deg, ${v(aId)}, ${v(bId)}`;
-  
+
     return {
       meta: {
         name:    v("f-meta-name")    || "Azure Light",
@@ -108,11 +148,13 @@
         highlight:  v("f-col-highlight"),
         background: v("f-col-bg"),
         surface:    v("f-col-surface"),
+        border:     v("f-col-border"),
+        neutral:    v("f-col-neutral"),
         text: {
           primary:   v("f-col-text-primary"),
           secondary: v("f-col-text-secondary"),
           muted:     v("f-col-text-muted"),
-          inverse:   "#ffffff",
+          inverse:   v("f-col-text-inverse") || "#ffffff",
         },
         status: {
           success: v("f-col-success"),
@@ -162,20 +204,22 @@
           xl:   n("f-br-xl"),
           full: 9999,
         },
-        width: { thin:1, normal:2, thick:4 },
+        width: n("f-fx-border-width") || 1,
       },
       shadows: {
-        sm:    `0 1px 3px rgba(30,42,74,0.08)`,
-        md:    `0 4px 12px rgba(30,42,74,0.12)`,
-        lg:    `0 10px 30px rgba(30,42,74,0.16)`,
+        opacity: n("f-fx-shadow-opacity") || 50,
+        blur:    n("f-fx-shadow-blur")    || 100,
         glow:  "0 0 20px",
         neon:  "0 0 30px",
-        inset: "inset 0 1px 3px rgba(30,42,74,0.12)",
+      },
+      effects: {
+        anim_speed: n("f-fx-anim-speed") || 100,
+        density: toggle("density", "comfortable"),
       },
       ui: {
-        card:   { border_radius: n("f-ui-card-radius"),  padding: n("f-ui-card-padding") },
-        button: { border_radius: n("f-ui-btn-radius"),   padding: "10px 16px", font_weight: 600 },
-        input:  { border_radius: n("f-ui-input-radius"), padding: "10px 12px" },
+        card:   { border_radius: n("f-ui-card-radius"),  padding: n("f-ui-card-padding"), elevation: toggle("cardElevation", "medium") },
+        button: { border_radius: n("f-ui-btn-radius"),   padding: "10px 16px", font_weight: 600, shape: toggle("btnShape", "rounded") },
+        input:  { border_radius: n("f-ui-input-radius"), padding: "10px 12px", style: toggle("inputStyle", "outline") },
         modal:  { border_radius: 16, padding: 24 },
       },
     };
@@ -206,22 +250,30 @@
     set("f-meta-name",    g(t,"meta","name"));
     set("f-meta-version", g(t,"meta","version"));
     set("f-meta-author",  g(t,"meta","author"));
-  
-    // Theme toggle
-    const mode = (g(t,"theme") || "light").toLowerCase();
-    document.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
-    const activeBtn = document.getElementById(mode === "dark" ? "f-theme-dark" : "f-theme-light");
-    if (activeBtn) activeBtn.classList.add("active");
-  
+
+    // Generic scoped toggle-row setter (theme, density, btnShape, cardElevation, inputStyle…)
+    const setToggleGroup = (group, val, fallback) => {
+      const row = document.querySelector(`.toggle-row[data-group="${group}"]`);
+      if (!row) return;
+      const target = row.querySelector(`.toggle-btn[data-val="${val || fallback}"]`) || row.querySelector(`.toggle-btn[data-val="${fallback}"]`);
+      row.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
+      if (target) target.classList.add("active");
+    };
+
+    setToggleGroup("theme", (g(t,"theme") || "light").toLowerCase(), "light");
+
     setColor("f-col-primary",   "ch-primary",   "cp-primary",   g(t,"colors","primary"));
     setColor("f-col-secondary", "ch-secondary", "cp-secondary", g(t,"colors","secondary"));
     setColor("f-col-accent",    "ch-accent",    "cp-accent",    g(t,"colors","accent"));
     setColor("f-col-highlight", "ch-highlight", "cp-highlight", g(t,"colors","highlight"));
     setColor("f-col-bg",        "ch-bg",        "cp-bg",        g(t,"colors","background"));
     setColor("f-col-surface",   "ch-surface",   "cp-surface",   g(t,"colors","surface"));
+    setColor("f-col-border",    "ch-border",    "cp-border",    g(t,"colors","border"));
+    setColor("f-col-neutral",   "ch-neutral",   "cp-neutral",   g(t,"colors","neutral"));
     setColor("f-col-text-primary",   "ch-text-primary",   "cp-text-primary",   g(t,"colors","text","primary"));
     setColor("f-col-text-secondary", "ch-text-secondary", "cp-text-secondary", g(t,"colors","text","secondary"));
     setColor("f-col-text-muted",     "ch-text-muted",     "cp-text-muted",     g(t,"colors","text","muted"));
+    setColor("f-col-text-inverse",   "ch-text-inverse",   "cp-text-inverse",   g(t,"colors","text","inverse"));
     setColor("f-col-success", "ch-success", "cp-success", g(t,"colors","status","success"));
     setColor("f-col-warning", "ch-warning", "cp-warning", g(t,"colors","status","warning"));
     setColor("f-col-error",   "ch-error",   "cp-error",   g(t,"colors","status","error"));
@@ -268,7 +320,17 @@
     setSlider("f-ui-card-padding", "sv-ui-card-padding", g(t,"ui","card","padding"));
     setSlider("f-ui-btn-radius",   "sv-ui-btn-radius",   g(t,"ui","button","border_radius"));
     setSlider("f-ui-input-radius", "sv-ui-input-radius", g(t,"ui","input","border_radius"));
-  
+
+    setSlider("f-fx-shadow-opacity", "sv-fx-shadow-opacity", g(t,"shadows","opacity"));
+    setSlider("f-fx-shadow-blur",    "sv-fx-shadow-blur",    g(t,"shadows","blur"));
+    setSlider("f-fx-border-width",   "sv-fx-border-width",   g(t,"border","width"));
+    setSlider("f-fx-anim-speed",     "sv-fx-anim-speed",     g(t,"effects","anim_speed"));
+
+    setToggleGroup("density",       g(t,"effects","density"),         "comfortable");
+    setToggleGroup("btnShape",      g(t,"ui","button","shape"),       "rounded");
+    setToggleGroup("cardElevation", g(t,"ui","card","elevation"),     "medium");
+    setToggleGroup("inputStyle",    g(t,"ui","input","style"),        "outline");
+
     updateGradPreviews();
   }
   
@@ -289,14 +351,33 @@
   const errorBar = document.getElementById("eb");
   const mainEl   = document.getElementById("main");
   let charts = [];
+  let lastTokens = null; // raw form object from the last render() — used by exporters
+  let lastParams = null; // derived flat params from the last render() — used by exporters
   
-  function render() {
-    charts.forEach(c => { try { c.destroy(); } catch(e){} });
-    charts = [];
-    errorBar.style.display = "none";
-  
-    const t = readForm();
-  
+  /** Read the raw nested token object (t) and derive the flat, render-ready
+   *  parameter object (p) used by every section builder AND by the CSS/JSON
+   *  exporters, so the live preview and the exported design system never
+   *  drift apart. */
+  function buildParams(t) {
+    const densityMult = { compact: 0.75, comfortable: 1, spacious: 1.35 }[g(t,"effects","density")] ?? 1;
+    const shadowOpacityMult = (g(t,"shadows","opacity") ?? 50) / 50;   // 50 = baseline (1x)
+    const shadowBlurMult    = (g(t,"shadows","blur")    ?? 100) / 100; // 100 = baseline (1x)
+    const shadowTint = g(t,"colors","text","primary") || "#1e2a4a";
+    const shadowRgb = hex2rgb(shadowTint);
+    const shOpacity = (base) => Math.min(base * shadowOpacityMult, 0.9).toFixed(3);
+    const shBlur    = (base) => Math.round(base * shadowBlurMult);
+
+    const baseSpacing = g(t,"spacing") || { xs:4,sm:8,md:16,lg:24,xl:40,xxl:64,xxxl:96 };
+    const spacing = Object.fromEntries(
+      Object.entries(baseSpacing).map(([k, v]) => [k, Math.round(v * densityMult)]),
+    );
+
+    const btnShape = g(t,"ui","button","shape") || "rounded";
+    const cardElevation = g(t,"ui","card","elevation") || "medium";
+    const inputStyle = g(t,"ui","input","style") || "outline";
+    const rFull = g(t,"border","radius","full") ?? 9999;
+    const brRaw = g(t,"ui","button","border_radius") ?? 8;
+
     const p = {
       primary:   g(t,"colors","primary")    || "#2563eb",
       secondary: g(t,"colors","secondary")  || "#1e40af",
@@ -304,21 +385,24 @@
       highlight: g(t,"colors","highlight")  || "#0ea5e9",
       bg:        g(t,"colors","background") || "#f0f4ff",
       surface:   g(t,"colors","surface")    || "#ffffff",
+      border:    g(t,"colors","border")     || "#c8d4f0",
+      neutral:   g(t,"colors","neutral")    || "#e8eeff",
       tp:        g(t,"colors","text","primary")   || "#1e2a4a",
       ts:        g(t,"colors","text","secondary") || "#4a5878",
       tm:        g(t,"colors","text","muted")     || "#7a8aaa",
+      onPrimary: g(t,"colors","text","inverse")   || "#ffffff",
       ok:        g(t,"colors","status","success") || "#16a34a",
       warn:      g(t,"colors","status","warning") || "#d97706",
       err:       g(t,"colors","status","error")   || "#dc2626",
       info:      g(t,"colors","status","info")    || "#0284c7",
-  
+
       gradBrand:  g(t,"gradients","brand")  || "135deg, #1e40af, #2563eb",
       gradNeon:   g(t,"gradients","neon")   || "135deg, #7c3aed, #2563eb",
       gradCyber:  g(t,"gradients","cyber")  || "135deg, #0ea5e9, #2563eb",
       gradVoid:   g(t,"gradients","void")   || "135deg, #1e2a4a, #2d3f6e",
       gradAurora: g(t,"gradients","aurora") || "135deg, #7c3aed, #0ea5e9",
       gradSunset: g(t,"gradients","sunset") || "135deg, #2563eb, #7c3aed",
-  
+
       ff: g(t,"typography","font_family","primary")   || "Inter",
       fm: g(t,"typography","font_family","secondary") || "JetBrains Mono",
       fd: g(t,"typography","font_family","display")   || "Space Grotesk",
@@ -326,54 +410,84 @@
       fw: g(t,"typography","font_weight") || { regular:400,medium:500,semibold:600,bold:700,black:900 },
       lh: g(t,"typography","line_height")    || { tight:1.1,base:1.5,loose:1.8 },
       ls: g(t,"typography","letter_spacing") || { tight:"-0.02em",normal:"0em",wide:"0.06em",wider:"0.14em",widest:"0.24em" },
-  
-      spacing: g(t,"spacing") || { xs:4,sm:8,md:16,lg:24,xl:40,xxl:64,xxxl:96 },
-  
-      shSm:   g(t,"shadows","sm")    || "0 1px 3px rgba(30,42,74,0.08)",
-      shMd:   g(t,"shadows","md")    || "0 4px 12px rgba(30,42,74,0.12)",
-      shLg:   g(t,"shadows","lg")    || "0 10px 30px rgba(30,42,74,0.16)",
-      shGlow: g(t,"shadows","glow")  || "0 0 20px",
-      shNeon: g(t,"shadows","neon")  || "0 0 30px",
-      shInset:g(t,"shadows","inset") || "inset 0 1px 3px rgba(30,42,74,0.12)",
-  
+
+      spacing,
+      densityMult,
+      density: g(t,"effects","density") || "comfortable",
+
+      shSm:   `0 1px ${shBlur(3)}px rgba(${shadowRgb},${shOpacity(0.08)})`,
+      shMd:   `0 4px ${shBlur(12)}px rgba(${shadowRgb},${shOpacity(0.12)})`,
+      shLg:   `0 10px ${shBlur(30)}px rgba(${shadowRgb},${shOpacity(0.16)})`,
+      shInset:`inset 0 1px ${shBlur(3)}px rgba(${shadowRgb},${shOpacity(0.12)})`,
+      shGlow: `0 0 ${shBlur(20)}px`,
+      shNeon: `0 0 ${shBlur(30)}px`,
+      shadowOpacityMult, shadowBlurMult,
+
       rNone: g(t,"border","radius","none") ?? 0,
       rSm:   g(t,"border","radius","sm")   ?? 4,
       rMd:   g(t,"border","radius","md")   ?? 8,
       rLg:   g(t,"border","radius","lg")   ?? 12,
       rXl:   g(t,"border","radius","xl")   ?? 16,
-      rFull: g(t,"border","radius","full") ?? 9999,
-  
+      rFull,
+      borderWidth: g(t,"border","width") ?? 1,
+
       cr: g(t,"ui","card","border_radius")    ?? 12,
-      cp: g(t,"ui","card","padding")          ?? 16,
+      cp: Math.round((g(t,"ui","card","padding") ?? 16) * densityMult),
       ir: g(t,"ui","input","border_radius")   ?? 8,
-      br: g(t,"ui","button","border_radius")  ?? 8,
-  
+      br: brRaw,
+      btnShape,
+      btnRadius: btnShape === "sharp" ? 0 : btnShape === "pill" ? rFull : brRaw,
+      cardElevation,
+      inputStyle,
+
+      animSpeed: (g(t,"effects","anim_speed") ?? 100) / 100,
+
       metaName:   g(t,"meta","name")    || "System",
       metaVer:    g(t,"meta","version") || "1.0.0",
       metaAuthor: g(t,"meta","author")  || "—",
-  
+
       themeMode: (g(t,"theme") || "light").toString().toLowerCase().trim(),
     };
-  
+
+    // Card elevation → one of the shadow scales above (or none for "flat")
+    p.cardShadow = { flat: "none", low: p.shSm, medium: p.shMd, high: p.shLg }[cardElevation] || p.shMd;
+
+    return p;
+  }
+
+  function render() {
+    charts.forEach(c => { try { c.destroy(); } catch(e){} });
+    charts = [];
+    errorBar.style.display = "none";
+
+    const t = readForm();
+    const p = buildParams(t);
+    lastTokens = t;
+    lastParams = p;
+
     document.documentElement.style.setProperty("--p-color", p.primary);
     applyTokensToUI(p);
-  
+
     const F  = `font-family:'${p.ff}',sans-serif`;
     const FM = `font-family:'${p.fm}',monospace`;
     const FD = `font-family:'${p.fd}','${p.ff}',sans-serif`;
-  
+
     mainEl.innerHTML =
       buildBanner(p, F, FM, FD) +
       buildPalette(p, F, FM) +
       buildStatusBadges(p, F, FM) +
+      buildAlerts(p, F, FM) +
       buildTypography(p, F, FM, FD) +
       buildGradients(p, F, FM) +
       buildShadows(p, F, FM) +
       buildBannerVariants(p, F, FM, FD) +
       buildThumbnails(p, F, FM, FD) +
       buildUIComponents(p, F, FM) +
+      buildFormControlsExtended(p, F, FM) +
+      buildNavigation(p, F, FM, FD) +
       buildWindowComponents(p, F, FM, FD) +
       buildCards(p, F, FM, FD) +
+      buildContentPatterns(p, F, FM, FD) +
       buildDataTable(p, F, FM) +
       buildTagsChips(p, F, FM) +
       buildTimeline(p, F, FM) +
@@ -381,25 +495,227 @@
       buildCharts(p, F, FM) +
       buildSpacingRadius(p, F, FM) +
       buildInteractionStates(p, F, FM);
-  
+
     setTimeout(() => initCharts(p), 60);
   }
   
   /* ═══════════════════════════════════════════════════════
-     EXPORT YAML
+     EXPORT — YAML / JSON / CSS
+     All three read the exact same live state (readForm() +
+     buildParams()), so whichever format you export matches
+     what's on screen right now.
      ═══════════════════════════════════════════════════════ */
-  function exportYaml() {
-    const obj = readForm();
-    const name    = (obj.meta?.name    || "theme").toLowerCase().replace(/\s+/g,"-");
-    const version = obj.meta?.version  || "1.0.0";
-    const yaml    = jsyaml.dump(obj, { indent: 2, lineWidth: 120 });
-    const blob    = new Blob([yaml], { type: "text/yaml;charset=utf-8;" });
-    const url     = URL.createObjectURL(blob);
-    const a       = document.createElement("a");
-    a.href = url; a.download = `${name}-v${version}.yaml`; a.click();
+  function downloadFile(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
     URL.revokeObjectURL(url);
   }
-  
+
+  function exportFileBase(obj) {
+    const name    = (obj.meta?.name    || "theme").toLowerCase().replace(/\s+/g, "-");
+    const version = obj.meta?.version  || "1.0.0";
+    return `${name}-v${version}`;
+  }
+
+  function exportYaml() {
+    const obj = readForm();
+    const yaml = jsyaml.dump(obj, { indent: 2, lineWidth: 120 });
+    downloadFile(`${exportFileBase(obj)}.tokens.yaml`, yaml, "text/yaml;charset=utf-8;");
+  }
+
+  function exportJson() {
+    const obj = readForm();
+    const json = JSON.stringify(obj, null, 2);
+    downloadFile(`${exportFileBase(obj)}.tokens.json`, json, "application/json;charset=utf-8;");
+  }
+
+  function exportCss() {
+    const obj = readForm();
+    const p   = buildParams(obj);
+    const css = buildDesignSystemCSS(p, obj);
+    downloadFile(`${exportFileBase(obj)}.tokens.css`, css, "text/css;charset=utf-8;");
+  }
+
+  /** Generates a standalone stylesheet: :root custom properties for every
+   *  token, plus ready-to-use component & utility classes built on top of
+   *  them — the same numbers driving the live preview, baked into real CSS. */
+  function buildDesignSystemCSS(p, t) {
+    const sp = p.spacing || {};
+    const px = (v) => `${v}px`;
+    const rules = [];
+
+    rules.push(`/*!
+ * ${p.metaName} — Design System v${p.metaVer}
+ * Generated by Style System Editor · ${new Date().toISOString().slice(0, 10)}
+ * Author: ${p.metaAuthor}
+ */`);
+
+    rules.push(`:root {
+  /* Color */
+  --color-primary: ${p.primary};
+  --color-secondary: ${p.secondary};
+  --color-accent: ${p.accent};
+  --color-highlight: ${p.highlight};
+  --color-background: ${p.bg};
+  --color-surface: ${p.surface};
+  --color-border: ${p.border};
+  --color-neutral: ${p.neutral};
+  --color-text-primary: ${p.tp};
+  --color-text-secondary: ${p.ts};
+  --color-text-muted: ${p.tm};
+  --color-on-primary: ${p.onPrimary};
+  --color-success: ${p.ok};
+  --color-warning: ${p.warn};
+  --color-error: ${p.err};
+  --color-info: ${p.info};
+
+  /* Gradients */
+  --gradient-brand: linear-gradient(${p.gradBrand});
+  --gradient-neon: linear-gradient(${p.gradNeon});
+  --gradient-cyber: linear-gradient(${p.gradCyber});
+  --gradient-void: linear-gradient(${p.gradVoid});
+  --gradient-aurora: linear-gradient(${p.gradAurora});
+  --gradient-sunset: linear-gradient(${p.gradSunset});
+
+  /* Typography */
+  --font-family-primary: '${p.ff}', sans-serif;
+  --font-family-secondary: '${p.fm}', monospace;
+  --font-family-display: '${p.fd}', '${p.ff}', sans-serif;
+  --font-size-xs: ${px(p.sz.xs)};
+  --font-size-sm: ${px(p.sz.sm)};
+  --font-size-md: ${px(p.sz.md)};
+  --font-size-lg: ${px(p.sz.lg)};
+  --font-size-xl: ${px(p.sz.xl)};
+  --font-size-xxl: ${px(p.sz.xxl)};
+  --font-size-display: ${px(p.sz.display)};
+  --font-weight-regular: ${p.fw.regular};
+  --font-weight-medium: ${p.fw.medium};
+  --font-weight-semibold: ${p.fw.semibold};
+  --font-weight-bold: ${p.fw.bold};
+  --font-weight-black: ${p.fw.black};
+  --line-height-tight: ${p.lh.tight};
+  --line-height-base: ${p.lh.base};
+  --line-height-loose: ${p.lh.loose};
+  --letter-spacing-tight: ${p.ls.tight};
+  --letter-spacing-normal: ${p.ls.normal};
+  --letter-spacing-wide: ${p.ls.wide};
+  --letter-spacing-wider: ${p.ls.wider};
+  --letter-spacing-widest: ${p.ls.widest};
+
+  /* Spacing */
+  --spacing-xs: ${px(sp.xs)};
+  --spacing-sm: ${px(sp.sm)};
+  --spacing-md: ${px(sp.md)};
+  --spacing-lg: ${px(sp.lg)};
+  --spacing-xl: ${px(sp.xl)};
+  --spacing-xxl: ${px(sp.xxl)};
+  --spacing-xxxl: ${px(sp.xxxl)};
+
+  /* Radius */
+  --radius-none: ${px(p.rNone)};
+  --radius-sm: ${px(p.rSm)};
+  --radius-md: ${px(p.rMd)};
+  --radius-lg: ${px(p.rLg)};
+  --radius-xl: ${px(p.rXl)};
+  --radius-full: ${px(p.rFull)};
+
+  /* Shadows */
+  --shadow-sm: ${p.shSm};
+  --shadow-md: ${p.shMd};
+  --shadow-lg: ${p.shLg};
+  --shadow-inset: ${p.shInset};
+  --shadow-glow-primary: ${p.shGlow} ${alpha(p.primary, 0.5)};
+  --shadow-glow-accent: ${p.shNeon} ${alpha(p.accent, 0.5)};
+
+  /* Effects & components */
+  --border-width: ${px(p.borderWidth)};
+  --anim-speed: ${p.animSpeed};
+  --card-radius: ${px(p.cr)};
+  --card-padding: ${px(p.cp)};
+  --card-shadow: ${p.cardShadow};
+  --button-radius: ${px(p.btnRadius)};
+  --input-radius: ${px(p.ir)};
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-primary);
+}
+
+/* ── Typography ─────────────────────────────────── */
+.text-display { font-family: var(--font-family-display); font-size: var(--font-size-display); font-weight: var(--font-weight-black); line-height: var(--line-height-tight); letter-spacing: var(--letter-spacing-tight); }
+.text-xl { font-family: var(--font-family-display); font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); }
+.text-lg { font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); line-height: var(--line-height-base); }
+.text-md { font-size: var(--font-size-md); font-weight: var(--font-weight-regular); line-height: var(--line-height-loose); }
+.text-sm { font-size: var(--font-size-sm); letter-spacing: var(--letter-spacing-wide); }
+.text-xs { font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-widest); text-transform: uppercase; }
+.font-mono { font-family: var(--font-family-secondary); }
+.text-muted { color: var(--color-text-secondary); }
+
+/* ── Buttons ────────────────────────────────────── */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; border-radius: var(--button-radius); padding: 10px 20px; font-family: var(--font-family-primary); font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); cursor: pointer; transition: opacity .15s, transform .1s, box-shadow .2s; }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { cursor: not-allowed; opacity: 0.5; }
+.btn-primary { background: var(--color-primary); color: var(--color-on-primary); box-shadow: 0 0 12px color-mix(in srgb, var(--color-primary) 40%, transparent); }
+.btn-secondary { background: var(--color-secondary); color: var(--color-on-primary); }
+.btn-accent { background: var(--color-accent); color: var(--color-on-primary); }
+.btn-gradient { background: var(--gradient-neon); color: var(--color-on-primary); }
+.btn-ghost { background: transparent; color: var(--color-text-primary); border: var(--border-width) solid color-mix(in srgb, var(--color-text-primary) 30%, transparent); }
+.btn-soft { background: color-mix(in srgb, var(--color-primary) 12%, transparent); color: var(--color-primary); border: var(--border-width) solid color-mix(in srgb, var(--color-primary) 30%, transparent); }
+.btn-danger { background: var(--color-error); color: var(--color-on-primary); }
+.btn-sm { padding: 5px 12px; font-size: var(--font-size-xs); }
+.btn-lg { padding: 12px 24px; font-size: var(--font-size-md); }
+.btn-pill { border-radius: var(--radius-full); }
+
+/* ── Card ───────────────────────────────────────── */
+.card { background: var(--color-surface); border: var(--border-width) solid var(--color-border); border-radius: var(--card-radius); padding: var(--card-padding); box-shadow: var(--card-shadow); }
+
+/* ── Inputs ─────────────────────────────────────── */
+.input { width: 100%; background: color-mix(in srgb, var(--color-text-primary) 4%, transparent); border: var(--border-width) solid var(--color-border); border-radius: var(--input-radius); padding: 10px 12px; font-family: var(--font-family-primary); font-size: var(--font-size-sm); color: var(--color-text-primary); outline: none; transition: border-color .15s, box-shadow .15s; }
+.input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent); }
+.input-error { border-color: var(--color-error); }
+.input-success { border-color: var(--color-success); }
+.input:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Badges & tags ──────────────────────────────── */
+.badge, .tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: var(--radius-sm); font-family: var(--font-family-secondary); font-size: var(--font-size-xs); font-weight: 700; letter-spacing: 0.06em; }
+.badge-success, .tag-success { background: color-mix(in srgb, var(--color-success) 12%, transparent); color: var(--color-success); border: 1px solid color-mix(in srgb, var(--color-success) 25%, transparent); }
+.badge-warning, .tag-warning { background: color-mix(in srgb, var(--color-warning) 12%, transparent); color: var(--color-warning); border: 1px solid color-mix(in srgb, var(--color-warning) 25%, transparent); }
+.badge-error, .tag-error { background: color-mix(in srgb, var(--color-error) 12%, transparent); color: var(--color-error); border: 1px solid color-mix(in srgb, var(--color-error) 25%, transparent); }
+.badge-info, .tag-info { background: color-mix(in srgb, var(--color-info) 12%, transparent); color: var(--color-info); border: 1px solid color-mix(in srgb, var(--color-info) 25%, transparent); }
+
+/* ── Alerts ─────────────────────────────────────── */
+.alert { display: flex; align-items: flex-start; gap: 10px; border-radius: var(--radius-md); padding: 12px 14px; font-family: var(--font-family-primary); }
+.alert-info { background: color-mix(in srgb, var(--color-info) 7%, transparent); border: var(--border-width) solid color-mix(in srgb, var(--color-info) 30%, transparent); }
+.alert-success { background: color-mix(in srgb, var(--color-success) 7%, transparent); border: var(--border-width) solid color-mix(in srgb, var(--color-success) 30%, transparent); }
+.alert-warning { background: color-mix(in srgb, var(--color-warning) 7%, transparent); border: var(--border-width) solid color-mix(in srgb, var(--color-warning) 30%, transparent); }
+.alert-error { background: color-mix(in srgb, var(--color-error) 7%, transparent); border: var(--border-width) solid color-mix(in srgb, var(--color-error) 30%, transparent); }
+
+/* ── Progress ───────────────────────────────────── */
+.progress { height: 6px; border-radius: var(--radius-full); background: var(--color-border); overflow: hidden; }
+.progress-fill { height: 100%; background: var(--color-primary); border-radius: var(--radius-full); transition: width .4s ease; }
+
+/* ── Avatar ─────────────────────────────────────── */
+.avatar { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: var(--font-size-xs); background: color-mix(in srgb, var(--color-primary) 20%, transparent); color: var(--color-primary); }
+
+/* ── Utilities: spacing ─────────────────────────── */
+${["xs", "sm", "md", "lg", "xl", "xxl"].map((k) => `.p-${k} { padding: var(--spacing-${k}); }\n.m-${k} { margin: var(--spacing-${k}); }\n.gap-${k} { gap: var(--spacing-${k}); }`).join("\n")}
+
+/* ── Utilities: radius & shadow ─────────────────── */
+${["sm", "md", "lg", "xl", "full"].map((k) => `.rounded-${k} { border-radius: var(--radius-${k}); }`).join("\n")}
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+`);
+
+    return rules.join("\n\n");
+  }
+
   /* ═══════════════════════════════════════════════════════
      IMPORT YAML
      ═══════════════════════════════════════════════════════ */
@@ -434,9 +750,12 @@
       ["f-col-highlight",      "ch-highlight",       "cp-highlight"],
       ["f-col-bg",             "ch-bg",              "cp-bg"],
       ["f-col-surface",        "ch-surface",         "cp-surface"],
+      ["f-col-border",         "ch-border",          "cp-border"],
+      ["f-col-neutral",        "ch-neutral",         "cp-neutral"],
       ["f-col-text-primary",   "ch-text-primary",    "cp-text-primary"],
       ["f-col-text-secondary", "ch-text-secondary",  "cp-text-secondary"],
       ["f-col-text-muted",     "ch-text-muted",      "cp-text-muted"],
+      ["f-col-text-inverse",   "ch-text-inverse",    "cp-text-inverse"],
       ["f-col-success",        "ch-success",         "cp-success"],
       ["f-col-warning",        "ch-warning",         "cp-warning"],
       ["f-col-error",          "ch-error",           "cp-error"],
@@ -484,10 +803,13 @@
       }
     });
   
-    // Theme mode toggle
+    // Scoped toggle groups (theme, density, button shape, card elevation, input style…)
+    // Each group clears only its own .toggle-row siblings, so independent groups
+    // don't clobber each other's selection.
     document.querySelectorAll(".toggle-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        document.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
+        const row = btn.closest(".toggle-row") || document;
+        row.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
       });
     });
@@ -502,8 +824,17 @@
   /* ═══════════════════════════════════════════════════════
      WIRE UP BUTTONS & KEYBOARD
      ═══════════════════════════════════════════════════════ */
-  document.getElementById("exportYaml").addEventListener("click", exportYaml);
-  
+  const flashBtn = (btn) => {
+    btn.classList.remove("flash");
+    void btn.offsetWidth;
+    btn.classList.add("flash");
+  };
+  [["exportYaml", exportYaml], ["exportCss", exportCss], ["exportJson", exportJson]].forEach(([id, fn]) => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener("click", () => { flashBtn(btn); fn(); });
+  });
+
   document.getElementById("ab").addEventListener("click", () => {
     const btn = document.getElementById("ab");
     btn.classList.remove("flash");
@@ -517,7 +848,27 @@
       e.preventDefault(); render();
     }
   });
-  
+
+  /* ═══════════════════════════════════════════════════════
+     LIVE (REAL-TIME) UPDATES
+     Every field in the sidebar re-renders the whole canvas
+     as you tune it — dragging a slider or a color picker is
+     instantly reflected, no need to hit Apply. Apply/Ctrl+Enter
+     are kept as an explicit, discoverable affordance.
+     ═══════════════════════════════════════════════════════ */
+  function debounce(fn, wait) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+  }
+  const liveRender = debounce(render, 90);
+  const tokenForm = document.getElementById("token-form");
+  if (tokenForm) {
+    tokenForm.addEventListener("input", liveRender);
+    tokenForm.addEventListener("click", (e) => {
+      if (e.target.closest(".toggle-btn")) liveRender();
+    });
+  }
+
   /* ═══════════════════════════════════════════════════════
      BOOT
      ═══════════════════════════════════════════════════════ */
@@ -547,8 +898,8 @@
         <div style="font-size:${p.sz?.display || 48}px;font-weight:${p.fw?.black || 900};color:#fff;${FD};line-height:1;letter-spacing:-0.03em;text-shadow:0 0 40px ${alpha(p.primary, 0.6)}" class="neon-text">${p.metaName}</div>
         <div style="font-size:${p.sz?.lg || 18}px;color:rgba(255,255,255,0.65);${F};margin-top:10px;font-weight:${p.fw?.medium || 500}">Design Token System · by ${p.metaAuthor}</div>
         <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
-          <button style="background:#fff;color:${p.secondary};border:none;border-radius:${p.br}px;padding:10px 22px;font-size:12px;font-weight:${p.fw?.bold || 700};${F};cursor:pointer;letter-spacing:0.04em">Get Started ↗</button>
-          <button style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:${p.br}px;padding:10px 22px;font-size:12px;${F};cursor:pointer;backdrop-filter:blur(4px)">View Docs</button>
+          <button style="background:#fff;color:${p.secondary};border:none;border-radius:${p.btnRadius}px;padding:10px 22px;font-size:12px;font-weight:${p.fw?.bold || 700};${F};cursor:pointer;letter-spacing:0.04em">Get Started ↗</button>
+          <button style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:${p.btnRadius}px;padding:10px 22px;font-size:12px;${F};cursor:pointer;backdrop-filter:blur(4px)">View Docs</button>
         </div>
       </div>
     </div>`;
@@ -607,7 +958,56 @@
       .join("");
     return sec("Status & Alerts", `<div class="grid g2">${html}</div>`);
   }
-  
+
+  /* 3B. ALERTS & TOASTS ────────────────────────────── */
+  function buildAlerts(p, F, FM) {
+    const alerts = [
+      [p.info, "ℹ", "Heads up", "A new version of the design tokens is available to import."],
+      [p.ok, "✓", "Deploy complete", "All components rebuilt successfully with the current theme."],
+      [p.warn, "⚠", "Approaching limit", "You've used 92% of your monthly token export quota."],
+      [p.err, "✕", "Sync failed", "Could not reach the remote token registry. Retry shortly."],
+    ];
+    const alertHtml = alerts
+      .map(
+        ([c, icon, title, msg]) => `
+      <div class="alert" style="background:${alpha(c, 0.07)};border:${p.borderWidth}px solid ${alpha(c, 0.3)};border-radius:${p.rMd}px;padding:12px 14px">
+        <div style="width:20px;height:20px;border-radius:50%;background:${alpha(c, 0.16)};color:${c};display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">${icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;color:${p.tp};${F}">${title}</div>
+          <div style="font-size:10.5px;color:${p.ts};${F};line-height:1.5;margin-top:2px">${msg}</div>
+        </div>
+        <span style="color:${p.tm};font-size:12px;cursor:pointer;flex-shrink:0">✕</span>
+      </div>`,
+      )
+      .join("");
+
+    const toasts = [
+      [p.ok, "✓", "Saved", "Token set exported as CSS"],
+      [p.primary, "◈", "Applied", `Theme "${p.metaName}" is live`],
+      [p.warn, "!", "Heads up", "3 tokens changed since last export"],
+    ];
+    const toastHtml = `
+      <div class="toast-stack">
+        ${toasts
+          .map(
+            ([c, icon, title, msg]) => `
+          <div class="toast" style="background:${p.surface};border:${p.borderWidth}px solid ${p.border};border-left:3px solid ${c};border-radius:${p.rMd}px;padding:10px 12px;box-shadow:${p.shMd}">
+            <span style="color:${c};font-size:13px;flex-shrink:0">${icon}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:11px;font-weight:700;color:${p.tp};${F}">${title}</div>
+              <div style="font-size:9.5px;color:${p.ts};${FM};margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${msg}</div>
+            </div>
+          </div>`,
+          )
+          .join("")}
+      </div>`;
+
+    return sec(
+      "Alerts & Toasts",
+      `<div class="grid g2"><div style="display:flex;flex-direction:column;gap:8px">${alertHtml}</div>${toastHtml}</div>`,
+    );
+  }
+
   /* 4. TYPOGRAPHY SCALE ────────────────────────────── */
   function buildTypography(p, F, FM, FD) {
     const rows = [
@@ -849,45 +1249,45 @@
       <div class="tile">
         <div class="tile-label">Button System</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
-          <button style="background:${p.primary};color:#fff;border:none;border-radius:${p.br}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer;letter-spacing:0.04em;box-shadow:0 0 12px ${alpha(p.primary, 0.4)}">Primary</button>
-          <button style="background:${p.accent};color:#fff;border:none;border-radius:${p.br}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer;box-shadow:0 0 12px ${alpha(p.accent, 0.4)}">Accent</button>
-          <button style="background:linear-gradient(${p.gradNeon});color:#fff;border:none;border-radius:${p.br}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Gradient</button>
-          <button style="background:transparent;color:${p.tp};border:1.5px solid ${alpha(p.tp,0.3)};border-radius:${p.br}px;padding:8px 18px;font-size:12px;${F};cursor:pointer">Ghost</button>
-          <button style="background:${alpha(p.primary, 0.12)};color:${p.primary};border:1px solid ${alpha(p.primary, 0.3)};border-radius:${p.br}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Soft</button>
-          <button style="background:${alpha(p.err, 0.12)};color:${p.err};border:1px solid ${alpha(p.err, 0.3)};border-radius:${p.br}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Danger</button>
-          <button style="background:${alpha(p.tp,0.04)};color:${p.tm};border:1px solid ${alpha(p.tp,0.1)};border-radius:${p.br}px;padding:8px 18px;font-size:12px;${F};cursor:not-allowed;opacity:0.5" disabled>Disabled</button>
+          <button style="background:${p.primary};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer;letter-spacing:0.04em;box-shadow:0 0 12px ${alpha(p.primary, 0.4)}">Primary</button>
+          <button style="background:${p.accent};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer;box-shadow:0 0 12px ${alpha(p.accent, 0.4)}">Accent</button>
+          <button style="background:linear-gradient(${p.gradNeon});color:#fff;border:none;border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Gradient</button>
+          <button style="background:transparent;color:${p.tp};border:${Math.max(p.borderWidth,1)}px solid ${alpha(p.tp,0.3)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;${F};cursor:pointer">Ghost</button>
+          <button style="background:${alpha(p.primary, 0.12)};color:${p.primary};border:1px solid ${alpha(p.primary, 0.3)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Soft</button>
+          <button style="background:${alpha(p.err, 0.12)};color:${p.err};border:1px solid ${alpha(p.err, 0.3)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Danger</button>
+          <button style="background:${alpha(p.tp,0.04)};color:${p.tm};border:1px solid ${alpha(p.tp,0.1)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;${F};cursor:not-allowed;opacity:0.5" disabled>Disabled</button>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px">
-          ${["sm", "md", "lg"].map((sz, i) => `<button style="background:${p.primary};color:#fff;border:none;border-radius:${p.br}px;padding:${[5, 8, 12][i]}px ${[12, 18, 24][i]}px;font-size:${[10, 12, 14][i]}px;font-weight:700;${F};cursor:pointer">Button ${sz.toUpperCase()}</button>`).join("")}
+          ${["sm", "md", "lg"].map((sz, i) => `<button style="background:${p.primary};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:${[5, 8, 12][i]}px ${[12, 18, 24][i]}px;font-size:${[10, 12, 14][i]}px;font-weight:700;${F};cursor:pointer">Button ${sz.toUpperCase()}</button>`).join("")}
           <button style="background:${p.primary};color:#fff;border:none;border-radius:${p.rFull}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Pill</button>
-          <button style="background:${p.primary};color:#fff;border:none;border-radius:${p.br}px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer">+</button>
+          <button style="background:${p.primary};color:#fff;border:none;border-radius:${p.btnRadius}px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer">+</button>
         </div>
       </div>`;
   
-    // Input fields
+    // Input fields — chrome follows the Component Style → Input Style setting
     const inputs = `
       <div class="tile">
-        <div class="tile-label">Input Fields</div>
+        <div class="tile-label">Input Fields · ${p.inputStyle}</div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <div>
             <label style="font-size:10px;color:${p.ts};${FM};display:block;margin-bottom:4px;letter-spacing:0.08em">USERNAME</label>
-            <div style="background:${alpha(p.tp,0.04)};border:1px solid ${alpha(p.tp,0.15)};border-radius:${p.ir}px;padding:9px 12px;display:flex;align-items:center;gap:8px">
+            <div style="${inputWrapStyle(p, p.tp, "default")};padding:9px 12px;display:flex;align-items:center;gap:8px">
               <span style="color:${p.ts};font-size:12px">@</span>
               <input class="input-spec" style="color:${p.tp}" placeholder="username" />
             </div>
           </div>
-          <div style="background:${alpha(p.tp,0.04)};border:1.5px solid ${p.primary};border-radius:${p.ir}px;padding:9px 12px;box-shadow:0 0 0 3px ${alpha(p.primary, 0.12)}">
+          <div style="${inputWrapStyle(p, p.primary, "focus")};padding:9px 12px">
             <input class="input-spec" style="color:${p.tp}" placeholder="Focused state…" />
           </div>
-          <div style="background:${alpha(p.err, 0.04)};border:1px solid ${alpha(p.err,0.5)};border-radius:${p.ir}px;padding:9px 12px">
+          <div style="${inputWrapStyle(p, p.err, "error")};padding:9px 12px">
             <input class="input-spec" style="color:${p.tp}" placeholder="Invalid input" />
             <div style="font-size:9px;color:${p.err};margin-top:5px;${FM}">⚠ This field is required</div>
           </div>
-          <div style="background:${alpha(p.ok, 0.04)};border:1px solid ${alpha(p.ok, 0.4)};border-radius:${p.ir}px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between">
+          <div style="${inputWrapStyle(p, p.ok, "valid")};padding:9px 12px;display:flex;align-items:center;justify-content:space-between">
             <input class="input-spec" style="color:${p.tp}" placeholder="Valid input" />
             <span style="color:${p.ok};font-size:13px;flex-shrink:0">✓</span>
           </div>
-          <div style="background:${alpha(p.tp,0.02)};border:1px solid ${alpha(p.tp,0.08)};border-radius:${p.ir}px;padding:9px 12px;opacity:0.45">
+          <div style="${inputWrapStyle(p, p.tp, "disabled")};padding:9px 12px;opacity:0.45">
             <input class="input-spec" style="color:${p.ts}" placeholder="Disabled…" disabled />
           </div>
         </div>
@@ -970,7 +1370,143 @@
       `<div class="grid g2">${buttons}</div><div class="grid g3" style="margin-top:10px">${inputs}${progress}${toggles}</div>`,
     );
   }
-  
+
+  /* 9B. FORM CONTROLS EXTENDED ─────────────────────── */
+  function buildFormControlsExtended(p, F, FM) {
+    const selectBox = `
+      <div class="tile">
+        <div class="tile-label">Select</div>
+        <div class="select-box" style="${inputWrapStyle(p, p.tp, "default")};padding:9px 12px;color:${p.tp};font-size:12px;${F}">
+          <span>Choose a plan…</span>
+          <span style="color:${p.ts};font-size:9px">▾</span>
+        </div>
+      </div>`;
+
+    const radioGroup = `
+      <div class="tile">
+        <div class="tile-label">Radio Group</div>
+        <div style="display:flex;flex-direction:column;gap:11px">
+          ${[["Starter", false], ["Pro", true], ["Enterprise", false]]
+            .map(
+              ([label, checked]) => `
+            <div class="radio-item">
+              <div class="radio-dot-outer" style="width:16px;height:16px;border:${Math.max(p.borderWidth, 1.5)}px solid ${checked ? p.primary : alpha(p.tp, 0.3)}">
+                ${checked ? `<div class="radio-dot-inner" style="width:8px;height:8px;background:${p.primary}"></div>` : ""}
+              </div>
+              <span style="font-size:12px;color:${p.tp};${F}">${label}</span>
+            </div>`,
+            )
+            .join("")}
+        </div>
+      </div>`;
+
+    const rangeSlider = `
+      <div class="tile">
+        <div class="tile-label">Range Slider</div>
+        <div style="padding:22px 4px 4px">
+          <div class="range-demo-track" style="height:4px;background:${alpha(p.tp, 0.12)}">
+            <div class="range-demo-fill" style="width:62%;background:${p.primary}"></div>
+            <div class="range-demo-thumb" style="left:62%;width:14px;height:14px;background:${p.primary};box-shadow:0 0 0 3px ${alpha(p.primary, 0.2)}"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:12px">
+            <span style="font-size:9px;color:${p.ts};${FM}">0</span>
+            <span style="font-size:10px;color:${p.primary};${FM};font-weight:700">62</span>
+            <span style="font-size:9px;color:${p.ts};${FM}">100</span>
+          </div>
+        </div>
+      </div>`;
+
+    const searchInput = `
+      <div class="tile">
+        <div class="tile-label">Search</div>
+        <div class="search-box" style="${inputWrapStyle(p, p.tp, "default")};padding:8px 12px">
+          <span style="color:${p.ts};font-size:12px">⌕</span>
+          <input class="input-spec" style="color:${p.tp};flex:1" placeholder="Search components…" />
+          <span style="background:${alpha(p.tp, 0.08)};border-radius:3px;padding:1px 5px;font-size:9px;color:${p.ts};${FM}">⌘K</span>
+        </div>
+      </div>`;
+
+    const dropzone = `
+      <div class="tile">
+        <div class="tile-label">File Upload</div>
+        <div class="dropzone" style="border:2px dashed ${alpha(p.primary, 0.35)};border-radius:${p.rMd}px;padding:24px 12px;background:${alpha(p.primary, 0.03)}">
+          <span style="font-size:20px;color:${p.primary}">⇪</span>
+          <span style="font-size:11px;color:${p.tp};${F};font-weight:600">Drop files or click to upload</span>
+          <span style="font-size:9px;color:${p.ts};${FM}">SVG, PNG, JPG up to 10MB</span>
+        </div>
+      </div>`;
+
+    return sec(
+      "Form Controls Extended",
+      `<div class="grid g3">${selectBox}${radioGroup}${rangeSlider}</div>
+      <div class="grid g2" style="margin-top:10px">${searchInput}${dropzone}</div>`,
+    );
+  }
+
+  /* 9C. NAVIGATION ─────────────────────────────────── */
+  function buildNavigation(p, F, FM, FD) {
+    const navbar = `
+      <div class="tile" style="padding:12px 16px">
+        <div class="navbar">
+          <div style="width:26px;height:26px;border-radius:${p.rMd}px;background:linear-gradient(${p.gradBrand});display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:12px;${FD};flex-shrink:0">${p.metaName.charAt(0)}</div>
+          <div style="display:flex;gap:16px;flex:1;overflow-x:auto">
+            ${["Overview", "Tokens", "Components", "Docs"]
+              .map(
+                (l, i) => `<span class="nav-link" style="font-size:11px;${F};font-weight:${i === 0 ? 700 : 500};color:${i === 0 ? p.tp : p.ts}">${l}</span>`,
+              )
+              .join("")}
+          </div>
+          <span style="color:${p.ts};font-size:13px;cursor:pointer;flex-shrink:0">⌕</span>
+          <div style="width:26px;height:26px;border-radius:50%;background:${alpha(p.accent, 0.2)};color:${p.accent};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">${p.metaAuthor.charAt(0).toUpperCase()}</div>
+        </div>
+      </div>`;
+
+    const tabs = `
+      <div class="tile">
+        <div class="tile-label">Tabs</div>
+        <div class="tabs" style="border-bottom:${p.borderWidth}px solid ${p.border}">
+          ${["Design", "Code", "Usage", "Changelog"]
+            .map(
+              (l, i) => `<div class="tab" style="padding:8px 14px;font-size:11px;${F};font-weight:${i === 0 ? 700 : 500};color:${i === 0 ? p.primary : p.ts};border-bottom:2px solid ${i === 0 ? p.primary : "transparent"};margin-bottom:-${p.borderWidth}px">${l}</div>`,
+            )
+            .join("")}
+        </div>
+      </div>`;
+
+    const segmented = `
+      <div class="tile">
+        <div class="tile-label">Segmented Control</div>
+        <div class="segmented" style="border:${p.borderWidth}px solid ${p.border};border-radius:${p.rMd}px;overflow:hidden">
+          ${["Day", "Week", "Month"]
+            .map(
+              (l, i) => `<div class="seg-item" style="padding:7px 16px;font-size:11px;${F};font-weight:600;background:${i === 1 ? p.primary : "transparent"};color:${i === 1 ? p.onPrimary : p.ts}">${l}</div>`,
+            )
+            .join("")}
+        </div>
+      </div>`;
+
+    const pagination = `
+      <div class="tile">
+        <div class="tile-label">Pagination</div>
+        <div class="pagination">
+          <div class="page-item disabled" style="padding:6px 10px;border-radius:${p.rSm}px;border:${p.borderWidth}px solid ${p.border};color:${p.tm};font-size:11px;${FM};opacity:0.5">‹ Prev</div>
+          ${[1, 2, 3]
+            .map(
+              (n) => `<div class="page-item${n === 1 ? " active" : ""}" style="padding:6px 11px;border-radius:${p.rSm}px;border:${p.borderWidth}px solid ${n === 1 ? p.primary : p.border};background:${n === 1 ? p.primary : "transparent"};color:${n === 1 ? p.onPrimary : p.tp};font-size:11px;${FM};font-weight:700">${n}</div>`,
+            )
+            .join("")}
+          <span style="color:${p.tm};font-size:11px;padding:0 2px">…</span>
+          <div class="page-item" style="padding:6px 11px;border-radius:${p.rSm}px;border:${p.borderWidth}px solid ${p.border};color:${p.tp};font-size:11px;${FM}">12</div>
+          <div class="page-item" style="padding:6px 10px;border-radius:${p.rSm}px;border:${p.borderWidth}px solid ${p.border};color:${p.tp};font-size:11px;${FM}">Next ›</div>
+        </div>
+      </div>`;
+
+    return sec(
+      "Navigation",
+      `${navbar}<div class="grid g3" style="margin-top:10px">${tabs}${segmented}${pagination}</div>`,
+    );
+  }
+
   /* 10. WINDOW COMPONENTS ──────────────────────────── */
   function buildWindowComponents(p, F, FM, FD) {
     // OS-style window
@@ -1036,8 +1572,8 @@
           <div style="font-size:14px;font-weight:700;color:${p.tp};${F};margin-bottom:8px">Delete token set?</div>
           <div style="font-size:11px;color:${p.ts};${F};line-height:1.6;margin-bottom:16px">This will permanently delete <strong style="color:${p.tp}">${p.metaName} v${p.metaVer}</strong> and all associated design tokens. This action cannot be undone.</div>
           <div style="display:flex;gap:8px;justify-content:flex-end">
-            <button style="background:transparent;color:${p.ts};border:1px solid ${alpha(p.tp,0.2)};border-radius:${p.br}px;padding:7px 14px;font-size:11px;${F};cursor:pointer">Cancel</button>
-            <button style="background:${p.err};color:#fff;border:none;border-radius:${p.br}px;padding:7px 14px;font-size:11px;font-weight:700;${F};cursor:pointer;box-shadow:0 0 12px ${alpha(p.err, 0.4)}">Delete</button>
+            <button style="background:transparent;color:${p.ts};border:1px solid ${alpha(p.tp,0.2)};border-radius:${p.btnRadius}px;padding:7px 14px;font-size:11px;${F};cursor:pointer">Cancel</button>
+            <button style="background:${p.err};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:7px 14px;font-size:11px;font-weight:700;${F};cursor:pointer;box-shadow:0 0 12px ${alpha(p.err, 0.4)}">Delete</button>
           </div>
         </div>
       </div>`;
@@ -1052,7 +1588,7 @@
   function buildCards(p, F, FM, FD) {
     // Feature card
     const featureCard = `
-      <div style="background:${p.surface};border:1px solid ${alpha(p.primary, 0.2)};border-radius:${p.cr}px;padding:${p.cp}px;box-shadow:${p.shMd}">
+      <div style="background:${p.surface};border:${p.borderWidth}px solid ${alpha(p.primary, 0.2)};border-radius:${p.cr}px;padding:${p.cp}px;box-shadow:${p.cardShadow}">
         <div style="width:40px;height:40px;border-radius:${p.rMd}px;background:${alpha(p.primary, 0.15)};display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px;border:1px solid ${alpha(p.primary, 0.2)}">◈</div>
         <div style="font-size:14px;font-weight:700;color:${p.tp};${F};margin-bottom:6px">Token System</div>
         <div style="font-size:11px;color:${p.ts};${F};line-height:1.6">A unified source of truth for all design decisions across your entire product.</div>
@@ -1077,12 +1613,12 @@
             )
             .join("")}
         </div>
-        <button style="width:100%;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:${p.br}px;padding:9px;font-size:12px;font-weight:700;${F};cursor:pointer;backdrop-filter:blur(4px)">Get Pro Access</button>
+        <button style="width:100%;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:${p.btnRadius}px;padding:9px;font-size:12px;font-weight:700;${F};cursor:pointer;backdrop-filter:blur(4px)">Get Pro Access</button>
       </div>`;
   
     // Profile / identity card
     const profileCard = `
-      <div style="background:${p.surface};border:1px solid ${alpha(p.accent, 0.2)};border-radius:${p.cr}px;padding:${p.cp}px;text-align:center">
+      <div style="background:${p.surface};border:${p.borderWidth}px solid ${alpha(p.accent, 0.2)};border-radius:${p.cr}px;padding:${p.cp}px;text-align:center;box-shadow:${p.cardShadow}">
         <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(${p.gradAurora});margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;${FD};box-shadow:0 0 20px ${alpha(p.accent, 0.4)}">
           ${p.metaAuthor.charAt(0).toUpperCase()}
         </div>
@@ -1103,27 +1639,27 @@
             )
             .join("")}
         </div>
-        <button style="width:100%;background:${alpha(p.accent, 0.15)};color:${p.accent};border:1px solid ${alpha(p.accent, 0.3)};border-radius:${p.br}px;padding:7px;font-size:11px;font-weight:700;${F};cursor:pointer">Follow</button>
+        <button style="width:100%;background:${alpha(p.accent, 0.15)};color:${p.accent};border:1px solid ${alpha(p.accent, 0.3)};border-radius:${p.btnRadius}px;padding:7px;font-size:11px;font-weight:700;${F};cursor:pointer">Follow</button>
       </div>`;
   
     // Stat cards row
     const statCards = `
-      <div class="stat-card">
+      <div class="stat-card" style="box-shadow:${p.cardShadow};border-width:${p.borderWidth}px">
         <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Total Tokens</div>
         <div class="count-num" data-target="248" data-display="248" style="font-size:28px;font-weight:900;color:${p.primary};${FD};text-shadow:0 0 20px ${alpha(p.primary, 0.4)}">0</div>
         <div style="font-size:10px;color:${p.ok};${FM};margin-top:4px">↑ +12 this week</div>
       </div>
-      <div class="stat-card" style="--p-color:${p.accent}">
+      <div class="stat-card" style="--p-color:${p.accent};box-shadow:${p.cardShadow};border-width:${p.borderWidth}px">
         <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Components</div>
         <div class="count-num" data-target="64" data-display="64" style="font-size:28px;font-weight:900;color:${p.accent};${FD};text-shadow:0 0 20px ${alpha(p.accent, 0.4)}">0</div>
         <div style="font-size:10px;color:${p.ok};${FM};margin-top:4px">↑ +4 this week</div>
       </div>
-      <div class="stat-card" style="--p-color:${p.ok}">
+      <div class="stat-card" style="--p-color:${p.ok};box-shadow:${p.cardShadow};border-width:${p.borderWidth}px">
         <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Coverage</div>
         <div class="count-num" data-target="97" data-display="97%" style="font-size:28px;font-weight:900;color:${p.ok};${FD};text-shadow:0 0 20px ${alpha(p.ok, 0.4)}">0</div>
         <div style="font-size:10px;color:${p.ok};${FM};margin-top:4px">→ Stable</div>
       </div>
-      <div class="stat-card" style="--p-color:${p.warn}">
+      <div class="stat-card" style="--p-color:${p.warn};box-shadow:${p.cardShadow};border-width:${p.borderWidth}px">
         <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Warnings</div>
         <div class="count-num" data-target="3" data-display="3" style="font-size:28px;font-weight:900;color:${p.warn};${FD};text-shadow:0 0 20px ${alpha(p.warn, 0.4)}">0</div>
         <div style="font-size:10px;color:${p.ts};${FM};margin-top:4px">↓ -2 resolved</div>
@@ -1136,7 +1672,102 @@
       <div class="grid g4" style="margin-top:10px">${statCards}</div>`,
     );
   }
-  
+
+  /* 11B. CONTENT PATTERNS ──────────────────────────── */
+  function buildContentPatterns(p, F, FM, FD) {
+    const accordion = `
+      <div class="tile">
+        <div class="tile-label">Accordion</div>
+        ${[
+          { q: "What is a design token?", a: "A named value — color, spacing, font — that stands in for a hardcoded value across your UI.", open: true },
+          { q: "Can I export as CSS variables?", a: "Yes — use the CSS export button in the sidebar to get :root variables plus ready-made component classes.", open: false },
+          { q: "Does it support dark mode?", a: "Yes, toggle Theme Mode in the Meta section and re-export.", open: false },
+        ]
+          .map(
+            ({ q, a, open }) => `
+          <div class="accordion-item${open ? " open" : ""}" style="border-bottom:${p.borderWidth}px solid ${p.border};padding:10px 2px">
+            <div class="accordion-header">
+              <span style="font-size:12px;font-weight:600;color:${p.tp};${F}">${q}</span>
+              <span class="accordion-chevron" style="color:${p.ts};font-size:10px">▾</span>
+            </div>
+            ${open ? `<div class="accordion-body" style="font-size:11px;color:${p.ts};${F};line-height:1.6;margin-top:8px">${a}</div>` : ""}
+          </div>`,
+          )
+          .join("")}
+      </div>`;
+
+    const listGroup = `
+      <div class="tile">
+        <div class="tile-label">List Group</div>
+        <div class="list-group">
+          ${[
+            ["◈", "Appearance", "Theme, colors, fonts"],
+            ["⬡", "Components", "34 components"],
+            ["✦", "Exports", "CSS · JSON · YAML"],
+          ]
+            .map(
+              ([icon, label, sub], i, arr) => `
+            <div class="list-item" style="padding:10px 6px;border-bottom:${i < arr.length - 1 ? p.borderWidth : 0}px solid ${p.border}">
+              <span style="width:26px;height:26px;border-radius:${p.rMd}px;background:${alpha(p.primary, 0.1)};color:${p.primary};display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">${icon}</span>
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:600;color:${p.tp};${F}">${label}</div>
+                <div style="font-size:9.5px;color:${p.ts};${FM}">${sub}</div>
+              </div>
+              <span style="color:${p.tm};font-size:12px">›</span>
+            </div>`,
+            )
+            .join("")}
+        </div>
+      </div>`;
+
+    const testimonial = `
+      <div class="tile" style="padding:${p.cp}px">
+        <div class="testimonial-quote" style="font-size:12px;color:${p.tp};${F};line-height:1.7;font-style:italic">"This token system cut our design-to-dev handoff time in half."</div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:16px">
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(${p.gradSunset});flex-shrink:0"></div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:${p.tp};${F}">Maya Chen</div>
+            <div style="font-size:9px;color:${p.ts};${FM}">Staff Engineer</div>
+          </div>
+        </div>
+      </div>`;
+
+    const emptyState = `
+      <div class="tile empty-state" style="padding:30px 14px">
+        <div style="width:44px;height:44px;border-radius:${p.rLg}px;background:${alpha(p.tm, 0.1)};display:flex;align-items:center;justify-content:center;font-size:20px;color:${p.tm};margin-bottom:12px">☐</div>
+        <div style="font-size:12px;font-weight:700;color:${p.tp};${F};margin-bottom:4px">No components yet</div>
+        <div style="font-size:10.5px;color:${p.ts};${F};margin-bottom:14px;max-width:200px">Import a token file or add one from the sidebar to get started.</div>
+        <button style="background:${p.primary};color:${p.onPrimary};border:none;border-radius:${p.btnRadius}px;padding:7px 16px;font-size:11px;font-weight:700;${F};cursor:pointer">Add Component</button>
+      </div>`;
+
+    const skeleton = `
+      <div class="tile">
+        <div class="tile-label">Skeleton Loader</div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="skeleton" style="width:40px;height:40px;border-radius:50%;background:${alpha(p.tp, 0.08)};flex-shrink:0"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:7px">
+            <div class="skeleton" style="height:10px;width:70%;border-radius:4px;background:${alpha(p.tp, 0.1)}"></div>
+            <div class="skeleton" style="height:10px;width:45%;border-radius:4px;background:${alpha(p.tp, 0.08)}"></div>
+          </div>
+        </div>
+      </div>`;
+
+    const rating = `
+      <div class="tile">
+        <div class="tile-label">Rating</div>
+        <div class="rating-row">
+          ${[1, 1, 1, 1, 0].map((f) => `<span class="rating-star" style="color:${f ? p.warn : alpha(p.tp, 0.15)};font-size:18px">★</span>`).join("")}
+        </div>
+        <div style="font-size:10px;color:${p.ts};${FM};margin-top:6px">4.0 out of 5 · 128 reviews</div>
+      </div>`;
+
+    return sec(
+      "Content Patterns",
+      `<div class="grid g2">${accordion}${listGroup}</div>
+      <div class="grid g3" style="margin-top:10px">${testimonial}${emptyState}<div style="display:flex;flex-direction:column;gap:10px">${skeleton}${rating}</div></div>`,
+    );
+  }
+
   /* 12. DATA TABLE ─────────────────────────────────── */
   function buildDataTable(p, F, FM) {
     const rows = [
@@ -1761,21 +2392,3 @@
       requestAnimationFrame(step);
     });
   }
-  
-  /* ── WIRE UP EVENTS ──────────────────────────────── */
-  document.getElementById("exportYaml").addEventListener("click", exportYaml);
-  document.getElementById("ab").addEventListener("click", () => {
-    const btn = document.getElementById("ab");
-    btn.classList.remove("flash");
-    void btn.offsetWidth;
-    btn.classList.add("flash");
-    render();
-  });
-  editor.addEventListener("keydown", (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-      e.preventDefault();
-      render();
-    }
-  });
-  
-  render();

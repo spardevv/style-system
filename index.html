@@ -52,7 +52,7 @@
               </div>
               <div class="field">
                 <label>Theme Mode</label>
-                <div class="toggle-row">
+                <div class="toggle-row" data-group="theme">
                   <button class="toggle-btn active" id="f-theme-light" data-val="light">☀ Light</button>
                   <button class="toggle-btn" id="f-theme-dark" data-val="dark">☾ Dark</button>
                 </div>
@@ -115,6 +115,22 @@
                   <label>Surface</label>
                   <input type="text" class="color-hex" id="ch-surface" value="#ffffff" maxlength="7" />
                 </div>
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-border" value="#c8d4f0" />
+                    <div class="color-preview" id="cp-border" style="background:#c8d4f0"></div>
+                  </div>
+                  <label>Border</label>
+                  <input type="text" class="color-hex" id="ch-border" value="#c8d4f0" maxlength="7" />
+                </div>
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-neutral" value="#e8eeff" />
+                    <div class="color-preview" id="cp-neutral" style="background:#e8eeff"></div>
+                  </div>
+                  <label>Neutral</label>
+                  <input type="text" class="color-hex" id="ch-neutral" value="#e8eeff" maxlength="7" />
+                </div>
               </div>
 
               <div class="subsection-label">Text</div>
@@ -142,6 +158,14 @@
                   </div>
                   <label>Muted</label>
                   <input type="text" class="color-hex" id="ch-text-muted" value="#7a8aaa" maxlength="7" />
+                </div>
+                <div class="color-field">
+                  <div class="color-preview-wrap">
+                    <input type="color" id="f-col-text-inverse" value="#ffffff" />
+                    <div class="color-preview" id="cp-text-inverse" style="background:#ffffff"></div>
+                  </div>
+                  <label>On-Primary</label>
+                  <input type="text" class="color-hex" id="ch-text-inverse" value="#ffffff" maxlength="7" />
                 </div>
               </div>
 
@@ -324,13 +348,79 @@
             </div>
           </details>
 
+          <!-- EFFECTS & MOTION -->
+          <details class="section">
+            <summary class="section-title">
+              <span class="section-icon">✦</span> Effects &amp; Motion
+            </summary>
+            <div class="section-body">
+              <div class="subsection-label">Shadows</div>
+              <div class="slider-grid">
+                <div class="slider-field"><label>Intensity</label><input type="range" id="f-fx-shadow-opacity" min="10" max="100" value="50" /><span class="slider-val" id="sv-fx-shadow-opacity">50</span></div>
+                <div class="slider-field"><label>Blur</label><input type="range" id="f-fx-shadow-blur" min="50" max="200" value="100" /><span class="slider-val" id="sv-fx-shadow-blur">100</span></div>
+              </div>
+              <div class="subsection-label">Borders &amp; Motion</div>
+              <div class="slider-grid">
+                <div class="slider-field"><label>Width</label><input type="range" id="f-fx-border-width" min="1" max="6" value="1" /><span class="slider-val" id="sv-fx-border-width">1</span></div>
+                <div class="slider-field"><label>Speed</label><input type="range" id="f-fx-anim-speed" min="25" max="250" value="100" /><span class="slider-val" id="sv-fx-anim-speed">100</span></div>
+              </div>
+              <div class="field">
+                <label>Density</label>
+                <div class="toggle-row" data-group="density">
+                  <button class="toggle-btn" data-val="compact">Compact</button>
+                  <button class="toggle-btn active" data-val="comfortable">Comfy</button>
+                  <button class="toggle-btn" data-val="spacious">Spacious</button>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- COMPONENT STYLE -->
+          <details class="section">
+            <summary class="section-title">
+              <span class="section-icon">⌗</span> Component Style
+            </summary>
+            <div class="section-body">
+              <div class="field">
+                <label>Button Shape</label>
+                <div class="toggle-row" data-group="btnShape">
+                  <button class="toggle-btn" data-val="sharp">Sharp</button>
+                  <button class="toggle-btn active" data-val="rounded">Rounded</button>
+                  <button class="toggle-btn" data-val="pill">Pill</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Card Elevation</label>
+                <div class="toggle-row" data-group="cardElevation">
+                  <button class="toggle-btn" data-val="flat">Flat</button>
+                  <button class="toggle-btn" data-val="low">Low</button>
+                  <button class="toggle-btn active" data-val="medium">Medium</button>
+                  <button class="toggle-btn" data-val="high">High</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Input Style</label>
+                <div class="toggle-row" data-group="inputStyle">
+                  <button class="toggle-btn active" data-val="outline">Outline</button>
+                  <button class="toggle-btn" data-val="filled">Filled</button>
+                  <button class="toggle-btn" data-val="underline">Underline</button>
+                </div>
+              </div>
+            </div>
+          </details>
+
         </div>
         <!-- /token-form -->
 
         <div id="eb"></div>
 
         <div id="export-area">
-          <button id="exportYaml">⬇ Export YAML</button>
+          <div class="export-label">Export Design System</div>
+          <div class="export-btn-row">
+            <button id="exportYaml" class="export-btn">⬇ YAML</button>
+            <button id="exportCss" class="export-btn">⬇ CSS</button>
+            <button id="exportJson" class="export-btn">⬇ JSON</button>
+          </div>
         </div>
       </div>
       <!-- /SIDEBAR -->
