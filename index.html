@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Style System Editor</title>
+    <title>Style System — Editor de Tokens de Design</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -13,17 +13,58 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <!-- ── FIRST-VISIT INTRO / SPLASH ──────────────── -->
+    <div id="intro-screen">
+      <div class="intro-noise"></div>
+      <div class="intro-glow intro-glow-a"></div>
+      <div class="intro-glow intro-glow-b"></div>
+
+      <div class="intro-stage" id="intro-stage-loader">
+        <div class="intro-logo">
+          <span class="intro-logo-ring"></span>
+          <span class="intro-logo-mark">◈</span>
+        </div>
+        <div class="intro-loader-track">
+          <div class="intro-loader-fill" id="introLoaderFill"></div>
+        </div>
+        <div class="intro-loader-label" id="introLoaderLabel">Carregando tokens<span class="intro-dots"><span>.</span><span>.</span><span>.</span></span></div>
+      </div>
+
+      <div class="intro-stage intro-stage-presentation" id="intro-stage-presentation">
+        <div class="intro-eyebrow">Editor de Tokens de Design</div>
+        <h1 class="intro-title">Style<span class="intro-title-accent">System</span></h1>
+        <p class="intro-tagline">Crie, visualize e exporte sistemas de design completos — cores, tipografia, espaçamento e efeitos — em tempo real.</p>
+
+        <div class="intro-features">
+          <div class="intro-feature">
+            <span class="intro-feature-icon">◉</span>
+            <span>Edição visual de tokens com preview ao vivo</span>
+          </div>
+          <div class="intro-feature">
+            <span class="intro-feature-icon">▣</span>
+            <span>Componentes de UI renderizados com seu tema</span>
+          </div>
+          <div class="intro-feature">
+            <span class="intro-feature-icon">⬇</span>
+            <span>Exportação em CSS, JSON e regras para IA</span>
+          </div>
+        </div>
+
+        <button id="introEnterBtn" class="intro-enter-btn">Entrar no editor →</button>
+      </div>
+    </div>
+
     <div id="app">
       <!-- ── SIDEBAR ──────────────────────────────── -->
       <div id="sidebar">
 
         <!-- Header -->
         <div id="sh">
-          <span>Design Tokens</span>
+          <span>Tokens de Design</span>
           <div class="btn-group">
             <input type="file" id="fileInput" style="display:none" accept=".yaml,.yml,.json" />
-            <button id="ib">Import</button>
-            <button id="ab">Apply ↵</button>
+            <button id="ib">Importar</button>
+            <button id="ab">Aplicar ↵</button>
           </div>
         </div>
 
@@ -37,24 +78,24 @@
             </summary>
             <div class="section-body">
               <div class="field">
-                <label>Name</label>
+                <label>Nome</label>
                 <input type="text" id="f-meta-name" value="Azure Light" />
               </div>
               <div class="field-row">
                 <div class="field">
-                  <label>Version</label>
+                  <label>Versão</label>
                   <input type="text" id="f-meta-version" value="1.0.0" />
                 </div>
                 <div class="field">
-                  <label>Author</label>
+                  <label>Autor</label>
                   <input type="text" id="f-meta-author" value="System" />
                 </div>
               </div>
               <div class="field">
-                <label>Theme Mode</label>
+                <label>Modo de Tema</label>
                 <div class="toggle-row" data-group="theme">
-                  <button class="toggle-btn active" id="f-theme-light" data-val="light">☀ Light</button>
-                  <button class="toggle-btn" id="f-theme-dark" data-val="dark">☾ Dark</button>
+                  <button class="toggle-btn active" id="f-theme-light" data-val="light">☀ Claro</button>
+                  <button class="toggle-btn" id="f-theme-dark" data-val="dark">☾ Escuro</button>
                 </div>
               </div>
             </div>
@@ -63,7 +104,7 @@
           <!-- COLORS -->
           <details class="section" open>
             <summary class="section-title">
-              <span class="section-icon">◉</span> Colors
+              <span class="section-icon">◉</span> Cores
             </summary>
             <div class="section-body">
               <div class="color-grid">
@@ -72,7 +113,7 @@
                     <input type="color" id="f-col-primary" value="#2563eb" />
                     <div class="color-preview" id="cp-primary" style="background:#2563eb"></div>
                   </div>
-                  <label>Primary</label>
+                  <label>Primária</label>
                   <input type="text" class="color-hex" id="ch-primary" value="#2563eb" maxlength="7" />
                 </div>
                 <div class="color-field">
@@ -80,7 +121,7 @@
                     <input type="color" id="f-col-secondary" value="#1e40af" />
                     <div class="color-preview" id="cp-secondary" style="background:#1e40af"></div>
                   </div>
-                  <label>Secondary</label>
+                  <label>Secundária</label>
                   <input type="text" class="color-hex" id="ch-secondary" value="#1e40af" maxlength="7" />
                 </div>
                 <div class="color-field">
@@ -88,7 +129,7 @@
                     <input type="color" id="f-col-accent" value="#7c3aed" />
                     <div class="color-preview" id="cp-accent" style="background:#7c3aed"></div>
                   </div>
-                  <label>Accent</label>
+                  <label>Destaque</label>
                   <input type="text" class="color-hex" id="ch-accent" value="#7c3aed" maxlength="7" />
                 </div>
                 <div class="color-field">
@@ -96,7 +137,7 @@
                     <input type="color" id="f-col-highlight" value="#0ea5e9" />
                     <div class="color-preview" id="cp-highlight" style="background:#0ea5e9"></div>
                   </div>
-                  <label>Highlight</label>
+                  <label>Realce</label>
                   <input type="text" class="color-hex" id="ch-highlight" value="#0ea5e9" maxlength="7" />
                 </div>
                 <div class="color-field">
@@ -104,7 +145,7 @@
                     <input type="color" id="f-col-bg" value="#f0f4ff" />
                     <div class="color-preview" id="cp-bg" style="background:#f0f4ff"></div>
                   </div>
-                  <label>Background</label>
+                  <label>Fundo</label>
                   <input type="text" class="color-hex" id="ch-bg" value="#f0f4ff" maxlength="7" />
                 </div>
                 <div class="color-field">
@@ -112,7 +153,7 @@
                     <input type="color" id="f-col-surface" value="#ffffff" />
                     <div class="color-preview" id="cp-surface" style="background:#ffffff"></div>
                   </div>
-                  <label>Surface</label>
+                  <label>Superfície</label>
                   <input type="text" class="color-hex" id="ch-surface" value="#ffffff" maxlength="7" />
                 </div>
                 <div class="color-field">
@@ -120,7 +161,7 @@
                     <input type="color" id="f-col-border" value="#c8d4f0" />
                     <div class="color-preview" id="cp-border" style="background:#c8d4f0"></div>
                   </div>
-                  <label>Border</label>
+                  <label>Borda</label>
                   <input type="text" class="color-hex" id="ch-border" value="#c8d4f0" maxlength="7" />
                 </div>
                 <div class="color-field">
@@ -128,19 +169,19 @@
                     <input type="color" id="f-col-neutral" value="#e8eeff" />
                     <div class="color-preview" id="cp-neutral" style="background:#e8eeff"></div>
                   </div>
-                  <label>Neutral</label>
+                  <label>Neutro</label>
                   <input type="text" class="color-hex" id="ch-neutral" value="#e8eeff" maxlength="7" />
                 </div>
               </div>
 
-              <div class="subsection-label">Text</div>
+              <div class="subsection-label">Texto</div>
               <div class="color-grid">
                 <div class="color-field">
                   <div class="color-preview-wrap">
                     <input type="color" id="f-col-text-primary" value="#1e2a4a" />
                     <div class="color-preview" id="cp-text-primary" style="background:#1e2a4a"></div>
                   </div>
-                  <label>Primary</label>
+                  <label>Primária</label>
                   <input type="text" class="color-hex" id="ch-text-primary" value="#1e2a4a" maxlength="7" />
                 </div>
                 <div class="color-field">
@@ -148,7 +189,7 @@
                     <input type="color" id="f-col-text-secondary" value="#4a5878" />
                     <div class="color-preview" id="cp-text-secondary" style="background:#4a5878"></div>
                   </div>
-                  <label>Secondary</label>
+                  <label>Secundária</label>
                   <input type="text" class="color-hex" id="ch-text-secondary" value="#4a5878" maxlength="7" />
                 </div>
                 <div class="color-field">
@@ -156,7 +197,7 @@
                     <input type="color" id="f-col-text-muted" value="#7a8aaa" />
                     <div class="color-preview" id="cp-text-muted" style="background:#7a8aaa"></div>
                   </div>
-                  <label>Muted</label>
+                  <label>Esmaecida</label>
                   <input type="text" class="color-hex" id="ch-text-muted" value="#7a8aaa" maxlength="7" />
                 </div>
                 <div class="color-field">
@@ -164,7 +205,7 @@
                     <input type="color" id="f-col-text-inverse" value="#ffffff" />
                     <div class="color-preview" id="cp-text-inverse" style="background:#ffffff"></div>
                   </div>
-                  <label>On-Primary</label>
+                  <label>Sobre-Primária</label>
                   <input type="text" class="color-hex" id="ch-text-inverse" value="#ffffff" maxlength="7" />
                 </div>
               </div>
@@ -176,7 +217,7 @@
                     <input type="color" id="f-col-success" value="#16a34a" />
                     <div class="color-preview" id="cp-success" style="background:#16a34a"></div>
                   </div>
-                  <label>Success</label>
+                  <label>Sucesso</label>
                   <input type="text" class="color-hex" id="ch-success" value="#16a34a" maxlength="7" />
                 </div>
                 <div class="color-field">
@@ -184,7 +225,7 @@
                     <input type="color" id="f-col-warning" value="#d97706" />
                     <div class="color-preview" id="cp-warning" style="background:#d97706"></div>
                   </div>
-                  <label>Warning</label>
+                  <label>Aviso</label>
                   <input type="text" class="color-hex" id="ch-warning" value="#d97706" maxlength="7" />
                 </div>
                 <div class="color-field">
@@ -192,7 +233,7 @@
                     <input type="color" id="f-col-error" value="#dc2626" />
                     <div class="color-preview" id="cp-error" style="background:#dc2626"></div>
                   </div>
-                  <label>Error</label>
+                  <label>Erro</label>
                   <input type="text" class="color-hex" id="ch-error" value="#dc2626" maxlength="7" />
                 </div>
                 <div class="color-field">
@@ -210,12 +251,12 @@
           <!-- GRADIENTS -->
           <details class="section">
             <summary class="section-title">
-              <span class="section-icon">▣</span> Gradients
+              <span class="section-icon">▣</span> Gradientes
             </summary>
             <div class="section-body">
               <div class="grad-field" id="gf-brand">
                 <div class="grad-label-row">
-                  <label>Brand</label>
+                  <label>Marca</label>
                   <div class="grad-preview" id="gp-brand"></div>
                 </div>
                 <div class="field-row">
@@ -224,14 +265,14 @@
                       <input type="color" id="f-grad-brand-a" value="#1e40af" />
                       <div class="color-preview" id="cp-grad-brand-a" style="background:#1e40af"></div>
                     </div>
-                    <label>From</label>
+                    <label>De</label>
                   </div>
                   <div class="color-field mini">
                     <div class="color-preview-wrap">
                       <input type="color" id="f-grad-brand-b" value="#2563eb" />
                       <div class="color-preview" id="cp-grad-brand-b" style="background:#2563eb"></div>
                     </div>
-                    <label>To</label>
+                    <label>Para</label>
                   </div>
                   <div class="field angle-field">
                     <label>°</label>
@@ -242,24 +283,24 @@
               <div class="grad-field">
                 <div class="grad-label-row"><label>Neon</label><div class="grad-preview" id="gp-neon"></div></div>
                 <div class="field-row">
-                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-neon-a" value="#7c3aed" /><div class="color-preview" id="cp-grad-neon-a" style="background:#7c3aed"></div></div><label>From</label></div>
-                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-neon-b" value="#2563eb" /><div class="color-preview" id="cp-grad-neon-b" style="background:#2563eb"></div></div><label>To</label></div>
+                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-neon-a" value="#7c3aed" /><div class="color-preview" id="cp-grad-neon-a" style="background:#7c3aed"></div></div><label>De</label></div>
+                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-neon-b" value="#2563eb" /><div class="color-preview" id="cp-grad-neon-b" style="background:#2563eb"></div></div><label>Para</label></div>
                   <div class="field angle-field"><label>°</label><input type="number" id="f-grad-neon-deg" value="135" min="0" max="360" /></div>
                 </div>
               </div>
               <div class="grad-field">
                 <div class="grad-label-row"><label>Cyber</label><div class="grad-preview" id="gp-cyber"></div></div>
                 <div class="field-row">
-                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-cyber-a" value="#0ea5e9" /><div class="color-preview" id="cp-grad-cyber-a" style="background:#0ea5e9"></div></div><label>From</label></div>
-                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-cyber-b" value="#2563eb" /><div class="color-preview" id="cp-grad-cyber-b" style="background:#2563eb"></div></div><label>To</label></div>
+                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-cyber-a" value="#0ea5e9" /><div class="color-preview" id="cp-grad-cyber-a" style="background:#0ea5e9"></div></div><label>De</label></div>
+                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-cyber-b" value="#2563eb" /><div class="color-preview" id="cp-grad-cyber-b" style="background:#2563eb"></div></div><label>Para</label></div>
                   <div class="field angle-field"><label>°</label><input type="number" id="f-grad-cyber-deg" value="135" min="0" max="360" /></div>
                 </div>
               </div>
               <div class="grad-field">
                 <div class="grad-label-row"><label>Aurora</label><div class="grad-preview" id="gp-aurora"></div></div>
                 <div class="field-row">
-                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-aurora-a" value="#7c3aed" /><div class="color-preview" id="cp-grad-aurora-a" style="background:#7c3aed"></div></div><label>From</label></div>
-                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-aurora-b" value="#0ea5e9" /><div class="color-preview" id="cp-grad-aurora-b" style="background:#0ea5e9"></div></div><label>To</label></div>
+                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-aurora-a" value="#7c3aed" /><div class="color-preview" id="cp-grad-aurora-a" style="background:#7c3aed"></div></div><label>De</label></div>
+                  <div class="color-field mini"><div class="color-preview-wrap"><input type="color" id="f-grad-aurora-b" value="#0ea5e9" /><div class="color-preview" id="cp-grad-aurora-b" style="background:#0ea5e9"></div></div><label>Para</label></div>
                   <div class="field angle-field"><label>°</label><input type="number" id="f-grad-aurora-deg" value="135" min="0" max="360" /></div>
                 </div>
               </div>
@@ -269,25 +310,25 @@
           <!-- TYPOGRAPHY -->
           <details class="section">
             <summary class="section-title">
-              <span class="section-icon">Aa</span> Typography
+              <span class="section-icon">Aa</span> Tipografia
             </summary>
             <div class="section-body">
               <div class="field">
-                <label>Primary Font</label>
-                <input type="text" id="f-ff-primary" value="Inter" placeholder="e.g. Inter" />
+                <label>Fonte Primária</label>
+                <input type="text" id="f-ff-primary" value="Inter" placeholder="ex.: Inter" />
               </div>
               <div class="field-row">
                 <div class="field">
-                  <label>Secondary</label>
-                  <input type="text" id="f-ff-secondary" value="JetBrains Mono" placeholder="Mono font" />
+                  <label>Secundária</label>
+                  <input type="text" id="f-ff-secondary" value="JetBrains Mono" placeholder="Fonte mono" />
                 </div>
                 <div class="field">
                   <label>Display</label>
-                  <input type="text" id="f-ff-display" value="Space Grotesk" placeholder="Display font" />
+                  <input type="text" id="f-ff-display" value="Space Grotesk" placeholder="Fonte display" />
                 </div>
               </div>
 
-              <div class="subsection-label">Font Sizes (px)</div>
+              <div class="subsection-label">Tamanhos de Fonte (px)</div>
               <div class="slider-grid">
                 <div class="slider-field"><label>XS</label><input type="range" id="f-sz-xs" min="8" max="16" value="10" /><span class="slider-val" id="sv-sz-xs">10</span></div>
                 <div class="slider-field"><label>SM</label><input type="range" id="f-sz-sm" min="10" max="20" value="12" /><span class="slider-val" id="sv-sz-sm">12</span></div>
@@ -303,10 +344,10 @@
           <!-- SPACING & RADIUS -->
           <details class="section">
             <summary class="section-title">
-              <span class="section-icon">⊞</span> Spacing &amp; Radius
+              <span class="section-icon">⊞</span> Espaçamento &amp; Raio
             </summary>
             <div class="section-body">
-              <div class="subsection-label">Spacing (px)</div>
+              <div class="subsection-label">Espaçamento (px)</div>
               <div class="slider-grid">
                 <div class="slider-field"><label>XS</label><input type="range" id="f-sp-xs" min="2" max="12" value="4" /><span class="slider-val" id="sv-sp-xs">4</span></div>
                 <div class="slider-field"><label>SM</label><input type="range" id="f-sp-sm" min="4" max="20" value="8" /><span class="slider-val" id="sv-sp-sm">8</span></div>
@@ -316,7 +357,7 @@
                 <div class="slider-field"><label>XXL</label><input type="range" id="f-sp-xxl" min="40" max="128" value="64" /><span class="slider-val" id="sv-sp-xxl">64</span></div>
               </div>
 
-              <div class="subsection-label">Border Radius (px)</div>
+              <div class="subsection-label">Raio de Borda (px)</div>
               <div class="slider-grid">
                 <div class="slider-field"><label>SM</label><input type="range" id="f-br-sm" min="0" max="12" value="4" /><span class="slider-val" id="sv-br-sm">4</span></div>
                 <div class="slider-field"><label>MD</label><input type="range" id="f-br-md" min="0" max="20" value="8" /><span class="slider-val" id="sv-br-md">8</span></div>
@@ -329,21 +370,21 @@
           <!-- UI COMPONENTS -->
           <details class="section">
             <summary class="section-title">
-              <span class="section-icon">⬡</span> UI Components
+              <span class="section-icon">⬡</span> Componentes de UI
             </summary>
             <div class="section-body">
-              <div class="subsection-label">Card</div>
+              <div class="subsection-label">Cartão</div>
               <div class="slider-grid">
-                <div class="slider-field"><label>Radius</label><input type="range" id="f-ui-card-radius" min="0" max="32" value="12" /><span class="slider-val" id="sv-ui-card-radius">12</span></div>
+                <div class="slider-field"><label>Raio</label><input type="range" id="f-ui-card-radius" min="0" max="32" value="12" /><span class="slider-val" id="sv-ui-card-radius">12</span></div>
                 <div class="slider-field"><label>Padding</label><input type="range" id="f-ui-card-padding" min="8" max="40" value="16" /><span class="slider-val" id="sv-ui-card-padding">16</span></div>
               </div>
-              <div class="subsection-label">Button</div>
+              <div class="subsection-label">Botão</div>
               <div class="slider-grid">
-                <div class="slider-field"><label>Radius</label><input type="range" id="f-ui-btn-radius" min="0" max="32" value="8" /><span class="slider-val" id="sv-ui-btn-radius">8</span></div>
+                <div class="slider-field"><label>Raio</label><input type="range" id="f-ui-btn-radius" min="0" max="32" value="8" /><span class="slider-val" id="sv-ui-btn-radius">8</span></div>
               </div>
-              <div class="subsection-label">Input</div>
+              <div class="subsection-label">Campo</div>
               <div class="slider-grid">
-                <div class="slider-field"><label>Radius</label><input type="range" id="f-ui-input-radius" min="0" max="24" value="8" /><span class="slider-val" id="sv-ui-input-radius">8</span></div>
+                <div class="slider-field"><label>Raio</label><input type="range" id="f-ui-input-radius" min="0" max="24" value="8" /><span class="slider-val" id="sv-ui-input-radius">8</span></div>
               </div>
             </div>
           </details>
@@ -351,34 +392,34 @@
           <!-- EFFECTS & MOTION -->
           <details class="section">
             <summary class="section-title">
-              <span class="section-icon">✦</span> Effects &amp; Motion
+              <span class="section-icon">✦</span> Efeitos &amp; Movimento
             </summary>
             <div class="section-body">
-              <div class="subsection-label">Shadows</div>
+              <div class="subsection-label">Sombras</div>
               <div class="slider-grid">
-                <div class="slider-field"><label>Intensity</label><input type="range" id="f-fx-shadow-opacity" min="10" max="100" value="50" /><span class="slider-val" id="sv-fx-shadow-opacity">50</span></div>
-                <div class="slider-field"><label>Blur</label><input type="range" id="f-fx-shadow-blur" min="50" max="200" value="100" /><span class="slider-val" id="sv-fx-shadow-blur">100</span></div>
+                <div class="slider-field"><label>Intensidade</label><input type="range" id="f-fx-shadow-opacity" min="10" max="100" value="50" /><span class="slider-val" id="sv-fx-shadow-opacity">50</span></div>
+                <div class="slider-field"><label>Desfoque</label><input type="range" id="f-fx-shadow-blur" min="50" max="200" value="100" /><span class="slider-val" id="sv-fx-shadow-blur">100</span></div>
               </div>
-              <div class="subsection-label">Borders &amp; Motion</div>
+              <div class="subsection-label">Bordas &amp; Movimento</div>
               <div class="slider-grid">
-                <div class="slider-field"><label>Width</label><input type="range" id="f-fx-border-width" min="1" max="6" value="1" /><span class="slider-val" id="sv-fx-border-width">1</span></div>
-                <div class="slider-field"><label>Speed</label><input type="range" id="f-fx-anim-speed" min="25" max="250" value="100" /><span class="slider-val" id="sv-fx-anim-speed">100</span></div>
+                <div class="slider-field"><label>Largura</label><input type="range" id="f-fx-border-width" min="1" max="6" value="1" /><span class="slider-val" id="sv-fx-border-width">1</span></div>
+                <div class="slider-field"><label>Velocidade</label><input type="range" id="f-fx-anim-speed" min="25" max="250" value="100" /><span class="slider-val" id="sv-fx-anim-speed">100</span></div>
               </div>
               <div class="field">
-                <label>Border Style</label>
+                <label>Estilo de Borda</label>
                 <div class="toggle-row" data-group="borderStyle">
-                  <button class="toggle-btn active" data-val="solid">Solid</button>
-                  <button class="toggle-btn" data-val="dashed">Dashed</button>
-                  <button class="toggle-btn" data-val="dotted">Dotted</button>
-                  <button class="toggle-btn" data-val="double">Double</button>
+                  <button class="toggle-btn active" data-val="solid">Sólida</button>
+                  <button class="toggle-btn" data-val="dashed">Tracejada</button>
+                  <button class="toggle-btn" data-val="dotted">Pontilhada</button>
+                  <button class="toggle-btn" data-val="double">Dupla</button>
                 </div>
               </div>
               <div class="field">
-                <label>Density</label>
+                <label>Densidade</label>
                 <div class="toggle-row" data-group="density">
-                  <button class="toggle-btn" data-val="compact">Compact</button>
-                  <button class="toggle-btn active" data-val="comfortable">Comfy</button>
-                  <button class="toggle-btn" data-val="spacious">Spacious</button>
+                  <button class="toggle-btn" data-val="compact">Compacta</button>
+                  <button class="toggle-btn active" data-val="comfortable">Confortável</button>
+                  <button class="toggle-btn" data-val="spacious">Espaçosa</button>
                 </div>
               </div>
             </div>
@@ -387,32 +428,32 @@
           <!-- COMPONENT STYLE -->
           <details class="section">
             <summary class="section-title">
-              <span class="section-icon">⌗</span> Component Style
+              <span class="section-icon">⌗</span> Estilo de Componente
             </summary>
             <div class="section-body">
               <div class="field">
-                <label>Button Shape</label>
+                <label>Formato do Botão</label>
                 <div class="toggle-row" data-group="btnShape">
-                  <button class="toggle-btn" data-val="sharp">Sharp</button>
-                  <button class="toggle-btn active" data-val="rounded">Rounded</button>
-                  <button class="toggle-btn" data-val="pill">Pill</button>
+                  <button class="toggle-btn" data-val="sharp">Reto</button>
+                  <button class="toggle-btn active" data-val="rounded">Arredondado</button>
+                  <button class="toggle-btn" data-val="pill">Pílula</button>
                 </div>
               </div>
               <div class="field">
-                <label>Card Elevation</label>
+                <label>Elevação do Cartão</label>
                 <div class="toggle-row" data-group="cardElevation">
-                  <button class="toggle-btn" data-val="flat">Flat</button>
-                  <button class="toggle-btn" data-val="low">Low</button>
-                  <button class="toggle-btn active" data-val="medium">Medium</button>
-                  <button class="toggle-btn" data-val="high">High</button>
+                  <button class="toggle-btn" data-val="flat">Plana</button>
+                  <button class="toggle-btn" data-val="low">Baixa</button>
+                  <button class="toggle-btn active" data-val="medium">Média</button>
+                  <button class="toggle-btn" data-val="high">Alta</button>
                 </div>
               </div>
               <div class="field">
-                <label>Input Style</label>
+                <label>Estilo de Campo</label>
                 <div class="toggle-row" data-group="inputStyle">
-                  <button class="toggle-btn active" data-val="outline">Outline</button>
-                  <button class="toggle-btn" data-val="filled">Filled</button>
-                  <button class="toggle-btn" data-val="underline">Underline</button>
+                  <button class="toggle-btn active" data-val="outline">Contorno</button>
+                  <button class="toggle-btn" data-val="filled">Preenchido</button>
+                  <button class="toggle-btn" data-val="underline">Sublinhado</button>
                 </div>
               </div>
             </div>
@@ -425,8 +466,8 @@
 
         <div id="export-area">
           <button id="generateZip" class="generate-btn">
-            <span class="generate-btn-label">⬇ Generate Design System</span>
-            <span class="generate-btn-sub">CSS · JSON · usage &amp; AI rules (.zip)</span>
+            <span class="generate-btn-label">⬇ Gerar Sistema de Design</span>
+            <span class="generate-btn-sub">CSS · JSON · uso &amp; regras de IA (.zip)</span>
           </button>
         </div>
       </div>

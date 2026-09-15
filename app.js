@@ -1,4 +1,49 @@
 /* ═══════════════════════════════════════════════════════
+   FIRST-VISIT INTRO / SPLASH
+   Shown once (localStorage-gated), then never again.
+   ═══════════════════════════════════════════════════════ */
+(function initIntroScreen() {
+  const INTRO_KEY = "styleSystemIntroSeen";
+  const screen = document.getElementById("intro-screen");
+  if (!screen) return;
+
+  if (localStorage.getItem(INTRO_KEY)) {
+    screen.classList.add("intro-skip");
+    return;
+  }
+
+  const loaderStage = document.getElementById("intro-stage-loader");
+  const presentationStage = document.getElementById("intro-stage-presentation");
+  const fill = document.getElementById("introLoaderFill");
+  const enterBtn = document.getElementById("introEnterBtn");
+
+  let progress = 0;
+  const tick = () => {
+    progress = Math.min(100, progress + (100 - progress) * 0.12 + 1.5);
+    fill.style.width = progress + "%";
+    if (progress < 100) {
+      requestAnimationFrame(tick);
+    } else {
+      setTimeout(revealPresentation, 220);
+    }
+  };
+  requestAnimationFrame(tick);
+
+  function revealPresentation() {
+    loaderStage.classList.add("intro-fade-out");
+    presentationStage.classList.add("intro-visible");
+  }
+
+  function dismiss() {
+    localStorage.setItem(INTRO_KEY, "1");
+    screen.classList.add("intro-hidden");
+    setTimeout(() => screen.classList.add("intro-skip"), 550);
+  }
+
+  enterBtn.addEventListener("click", dismiss);
+})();
+
+/* ═══════════════════════════════════════════════════════
    HELPERS
    ═══════════════════════════════════════════════════════ */
    function g(o, ...p) {
@@ -864,7 +909,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
         populateForm(parsed);
         render();
       } catch(err) {
-        errorBar.textContent = `⚠ ${isJson ? "JSON" : "YAML"} Error: ` + err.message;
+        errorBar.textContent = `⚠ Erro de ${isJson ? "JSON" : "YAML"}: ` + err.message;
         errorBar.style.display = "block";
       }
     };
@@ -977,7 +1022,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
         await exportDesignSystemZip();
         flashBtn(generateBtn);
       } catch (err) {
-        errorBar.textContent = "⚠ Export error: " + err.message;
+        errorBar.textContent = "⚠ Erro ao exportar: " + err.message;
         errorBar.style.display = "block";
       } finally {
         generateBtn.classList.remove("generating");
@@ -1146,30 +1191,30 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       <!-- glow blob -->
       <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:${alpha(p.accent, 0.25)};filter:blur(60px);pointer-events:none"></div>
       <div style="position:relative;z-index:1">
-        <div style="font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.5);${FM};margin-bottom:10px">▸ System · v${p.metaVer}</div>
+        <div style="font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.5);${FM};margin-bottom:10px">▸ Sistema · v${p.metaVer}</div>
         <div style="font-size:${p.sz?.display || 48}px;font-weight:${p.fw?.black || 900};color:#fff;${FD};line-height:1;letter-spacing:-0.03em;text-shadow:0 0 40px ${alpha(p.primary, 0.6)}" class="neon-text">${p.metaName}</div>
-        <div style="font-size:${p.sz?.lg || 18}px;color:rgba(255,255,255,0.65);${F};margin-top:10px;font-weight:${p.fw?.medium || 500}">Design Token System · by ${p.metaAuthor}</div>
+        <div style="font-size:${p.sz?.lg || 18}px;color:rgba(255,255,255,0.65);${F};margin-top:10px;font-weight:${p.fw?.medium || 500}">Sistema de Tokens de Design · por ${p.metaAuthor}</div>
         <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
-          <button style="background:#fff;color:${p.secondary};border:none;border-radius:${p.btnRadius}px;padding:10px 22px;font-size:12px;font-weight:${p.fw?.bold || 700};${F};cursor:pointer;letter-spacing:0.04em">Get Started ↗</button>
-          <button style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:${p.btnRadius}px;padding:10px 22px;font-size:12px;${F};cursor:pointer;backdrop-filter:blur(4px)">View Docs</button>
+          <button style="background:#fff;color:${p.secondary};border:none;border-radius:${p.btnRadius}px;padding:10px 22px;font-size:12px;font-weight:${p.fw?.bold || 700};${F};cursor:pointer;letter-spacing:0.04em">Começar ↗</button>
+          <button style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:${p.btnRadius}px;padding:10px 22px;font-size:12px;${F};cursor:pointer;backdrop-filter:blur(4px)">Ver Docs</button>
         </div>
       </div>
     </div>`;
-    return sec("Hero Banner", banner);
+    return sec("Banner Principal", banner);
   }
   
   /* 2. PALETTE ─────────────────────────────────────── */
   function buildPalette(p, F, FM) {
     const swatches = [
-      ["Primary", p.primary],
-      ["Secondary", p.secondary],
-      ["Accent", p.accent],
-      ["Highlight", p.highlight],
-      ["Surface", p.surface],
-      ["Background", p.bg],
-      ["Success", p.ok],
-      ["Warning", p.warn],
-      ["Error", p.err],
+      ["Primária", p.primary],
+      ["Secundária", p.secondary],
+      ["Destaque", p.accent],
+      ["Realce", p.highlight],
+      ["Superfície", p.surface],
+      ["Fundo", p.bg],
+      ["Sucesso", p.ok],
+      ["Aviso", p.warn],
+      ["Erro", p.err],
       ["Info", p.info],
     ]
       .map(
@@ -1182,7 +1227,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       )
       .join("");
     return sec(
-      "Palette & Brand",
+      "Paleta & Marca",
       `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px">${swatches}</div>`,
     );
   }
@@ -1190,10 +1235,10 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
   /* 3. STATUS BADGES ───────────────────────────────── */
   function buildStatusBadges(p, F, FM) {
     const badges = [
-      [p.ok, "success", "Operational", "All systems nominal"],
-      [p.warn, "warning", "Degraded", "Performance issues"],
-      [p.err, "critical", "Offline", "Service unavailable"],
-      [p.info, "info", "Monitoring", "Running diagnostics"],
+      [p.ok, "sucesso", "Operacional", "Todos os sistemas normais"],
+      [p.warn, "aviso", "Degradado", "Problemas de desempenho"],
+      [p.err, "crítico", "Offline", "Serviço indisponível"],
+      [p.info, "info", "Monitorando", "Executando diagnósticos"],
     ];
     const html = badges
       .map(
@@ -1208,16 +1253,16 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       </div>`,
       )
       .join("");
-    return sec("Status & Alerts", `<div class="grid g2">${html}</div>`);
+    return sec("Status & Alertas", `<div class="grid g2">${html}</div>`);
   }
 
   /* 3B. ALERTS & TOASTS ────────────────────────────── */
   function buildAlerts(p, F, FM) {
     const alerts = [
-      [p.info, "ℹ", "Heads up", "A new version of the design tokens is available to import."],
-      [p.ok, "✓", "Deploy complete", "All components rebuilt successfully with the current theme."],
-      [p.warn, "⚠", "Approaching limit", "You've used 92% of your monthly token export quota."],
-      [p.err, "✕", "Sync failed", "Could not reach the remote token registry. Retry shortly."],
+      [p.info, "ℹ", "Atenção", "Uma nova versão dos tokens de design está disponível para importar."],
+      [p.ok, "✓", "Deploy concluído", "Todos os componentes foram reconstruídos com o tema atual."],
+      [p.warn, "⚠", "Perto do limite", "Você já usou 92% da sua cota mensal de exportação de tokens."],
+      [p.err, "✕", "Falha na sincronização", "Não foi possível acessar o registro remoto de tokens. Tente novamente em instantes."],
     ];
     const alertHtml = alerts
       .map(
@@ -1234,9 +1279,9 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       .join("");
 
     const toasts = [
-      [p.ok, "✓", "Saved", "Token set exported as CSS"],
-      [p.primary, "◈", "Applied", `Theme "${p.metaName}" is live`],
-      [p.warn, "!", "Heads up", "3 tokens changed since last export"],
+      [p.ok, "✓", "Salvo", "Conjunto de tokens exportado como CSS"],
+      [p.primary, "◈", "Aplicado", `Tema "${p.metaName}" está ativo`],
+      [p.warn, "!", "Atenção", "3 tokens alterados desde a última exportação"],
     ];
     const toastHtml = `
       <div class="toast-stack">
@@ -1255,7 +1300,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       </div>`;
 
     return sec(
-      "Alerts & Toasts",
+      "Alertas & Notificações",
       `<div class="grid g2"><div style="display:flex;flex-direction:column;gap:8px">${alertHtml}</div>${toastHtml}</div>`,
     );
   }
@@ -1278,7 +1323,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
         weight: p.fw?.black || 900,
         ls: p.ls?.tight || "-0.02em",
         lh: p.lh?.tight || 1.1,
-        sample: "Interface Layer",
+        sample: "Camada de Interface",
         font: FD,
       },
       {
@@ -1287,7 +1332,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
         weight: p.fw?.bold || 700,
         ls: "-0.01em",
         lh: p.lh?.tight || 1.1,
-        sample: "Design System",
+        sample: "Sistema de Design",
         font: F,
       },
       {
@@ -1296,7 +1341,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
         weight: p.fw?.semibold || 600,
         ls: "0",
         lh: p.lh?.base || 1.5,
-        sample: "Component Architecture",
+        sample: "Arquitetura de Componentes",
         font: F,
       },
       {
@@ -1306,7 +1351,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
         ls: "0",
         lh: p.lh?.loose || 1.8,
         sample:
-          "Tokens define every visual decision in a coherent design system.",
+          "Tokens definem toda decisão visual em um sistema de design coerente.",
         font: F,
       },
       {
@@ -1315,7 +1360,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
         weight: p.fw?.regular || 400,
         ls: p.ls?.wide || "0.06em",
         lh: p.lh?.base || 1.5,
-        sample: "Metadata · Version · Author · Tag · Label",
+        sample: "Metadados · Versão · Autor · Tag · Rótulo",
         font: F,
       },
       {
@@ -1324,7 +1369,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
         weight: p.fw?.bold || 700,
         ls: p.ls?.widest || "0.24em",
         lh: p.lh?.base || 1.5,
-        sample: "LABEL · CAPTION · BADGE · MICRO",
+        sample: "RÓTULO · LEGENDA · SELO · MICRO",
         font: FM,
       },
     ];
@@ -1348,7 +1393,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
           <div style="font-size:9px;color:${p.ts};${FM};margin-top:2px">${p.fm}</div>
         </div>
       </div>`;
-    return sec("Typography Scale", html + monoRow);
+    return sec("Escala Tipográfica", html + monoRow);
   }
   
   /* 5. GRADIENTS ───────────────────────────────────── */
@@ -1375,7 +1420,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       )
       .join("");
     return sec(
-      "Gradients",
+      "Gradientes",
       `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">${html}</div>`,
     );
   }
@@ -1414,7 +1459,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       </div>`,
       )
       .join("");
-    return sec("Shadows & Elevation", `<div class="grid g2">${html}</div>`);
+    return sec("Sombras & Elevação", `<div class="grid g2">${html}</div>`);
   }
   
   /* 7. BANNER VARIANTS ─────────────────────────────── */
@@ -1423,29 +1468,29 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
     const announcement = `
       <div style="background:${alpha(p.primary, 0.1)};border:1px solid ${alpha(p.primary, 0.3)};border-radius:${p.rMd}px;padding:12px 16px;display:flex;align-items:center;gap:12px">
         <div style="width:8px;height:8px;border-radius:50%;background:${p.primary};box-shadow:0 0 8px ${p.primary};flex-shrink:0;animation:pulse-dot 2s infinite;color:${p.primary}"></div>
-        <span style="font-size:12px;color:${p.tp};${F};flex:1">New feature shipped: <strong>Token versioning 2.0</strong> is now available.</span>
-        <span style="font-size:10px;color:${p.primary};${FM};cursor:pointer;white-space:nowrap">Learn more →</span>
+        <span style="font-size:12px;color:${p.tp};${F};flex:1">Novo recurso lançado: <strong>Versionamento de tokens 2.0</strong> já está disponível.</span>
+        <span style="font-size:10px;color:${p.primary};${FM};cursor:pointer;white-space:nowrap">Saiba mais →</span>
       </div>`;
   
     // Warning banner
     const warning = `
       <div style="background:${alpha(p.warn, 0.08)};border:1px solid ${alpha(p.warn, 0.3)};border-radius:${p.rMd}px;padding:12px 16px;display:flex;align-items:center;gap:12px">
         <span style="font-size:16px;flex-shrink:0">⚠</span>
-        <span style="font-size:12px;color:${p.tp};${F};flex:1">Scheduled maintenance on <strong>Saturday 03:00 UTC</strong>. Expect 10 min downtime.</span>
-        <span style="font-size:10px;color:${p.ts};${FM};cursor:pointer;white-space:nowrap">Dismiss ✕</span>
+        <span style="font-size:12px;color:${p.tp};${F};flex:1">Manutenção programada para <strong>sábado às 03:00 UTC</strong>. Espere 10 min de indisponibilidade.</span>
+        <span style="font-size:10px;color:${p.ts};${FM};cursor:pointer;white-space:nowrap">Dispensar ✕</span>
       </div>`;
   
     // Full-width dark banner
     const darkBanner = `
       <div style="position:relative;background:linear-gradient(${p.gradVoid});border:1px solid ${alpha(p.primary, 0.2)};border-radius:${p.rMd}px;padding:20px;overflow:hidden">
         <div style="position:absolute;bottom:-20px;right:-20px;width:120px;height:120px;border-radius:50%;background:${alpha(p.accent, 0.15)};filter:blur(30px);pointer-events:none"></div>
-        <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.18em;text-transform:uppercase;margin-bottom:6px">System Notice</div>
+        <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.18em;text-transform:uppercase;margin-bottom:6px">Aviso do Sistema</div>
         <div style="font-size:16px;font-weight:800;color:${p.tp};${FD};margin-bottom:8px">v${p.metaVer} · ${p.metaName}</div>
-        <div style="font-size:11px;color:${p.ts};${F}">Production build · All tokens compiled · ${new Date().toLocaleDateString("en-GB")}</div>
+        <div style="font-size:11px;color:${p.ts};${F}">Build de produção · Todos os tokens compilados · ${new Date().toLocaleDateString("pt-BR")}</div>
       </div>`;
   
     return sec(
-      "Banner Variants",
+      "Variantes de Banner",
       `<div style="display:flex;flex-direction:column;gap:10px">${announcement}${warning}${darkBanner}</div>`,
     );
   }
@@ -1453,12 +1498,12 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
   /* 8. THUMBNAILS ──────────────────────────────────── */
   function buildThumbnails(p, F, FM, FD) {
     const thumbs = [
-      { grad: p.gradBrand, icon: "◈", label: "Brand", tag: "v2.0" },
-      { grad: p.gradNeon, icon: "◉", label: "Neon", tag: "NEW" },
+      { grad: p.gradBrand, icon: "◈", label: "Marca", tag: "v2.0" },
+      { grad: p.gradNeon, icon: "◉", label: "Neon", tag: "NOVO" },
       { grad: p.gradCyber, icon: "◊", label: "Cyber", tag: "BETA" },
       { grad: p.gradAurora, icon: "⬡", label: "Aurora", tag: "DEV" },
       { grad: p.gradSunset, icon: "▣", label: "Sunset", tag: "PROD" },
-      { grad: p.gradVoid, icon: "■", label: "Void", tag: "DARK" },
+      { grad: p.gradVoid, icon: "■", label: "Void", tag: "ESCURO" },
     ];
     const thumbHtml = thumbs
       .map(
@@ -1478,14 +1523,14 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       <div style="grid-column:span 2;position:relative;border-radius:${p.rMd}px;overflow:hidden;aspect-ratio:16/7;background:linear-gradient(${p.gradNeon});border:1px solid ${alpha(p.accent, 0.3)}">
         <div style="position:absolute;inset:0;background-image:radial-gradient(circle at 20% 50%,${alpha(p.primary, 0.3)} 0%,transparent 60%),radial-gradient(circle at 80% 50%,${alpha(p.accent, 0.3)} 0%,transparent 60%)"></div>
         <div style="position:absolute;bottom:0;left:0;right:0;padding:20px 24px;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent)">
-          <div style="font-size:8px;color:rgba(255,255,255,0.5);${FM};letter-spacing:0.16em;text-transform:uppercase;margin-bottom:6px">Featured Project</div>
-          <div style="font-size:22px;font-weight:900;color:#fff;${FD};letter-spacing:-0.02em">${p.metaName} Design System</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.6);${F};margin-top:4px">by ${p.metaAuthor} · v${p.metaVer}</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.5);${FM};letter-spacing:0.16em;text-transform:uppercase;margin-bottom:6px">Projeto em Destaque</div>
+          <div style="font-size:22px;font-weight:900;color:#fff;${FD};letter-spacing:-0.02em">Sistema de Design ${p.metaName}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.6);${F};margin-top:4px">por ${p.metaAuthor} · v${p.metaVer}</div>
         </div>
       </div>`;
   
     return sec(
-      "Thumbnails & Media Cards",
+      "Miniaturas & Cartões de Mídia",
       `
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">
         ${featured}
@@ -1499,19 +1544,19 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
     // Button variants
     const buttons = `
       <div class="tile">
-        <div class="tile-label">Button System</div>
+        <div class="tile-label">Sistema de Botões</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
-          <button style="background:${p.primary};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer;letter-spacing:0.04em;box-shadow:0 0 12px ${alpha(p.primary, 0.4)}">Primary</button>
-          <button style="background:${p.accent};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer;box-shadow:0 0 12px ${alpha(p.accent, 0.4)}">Accent</button>
-          <button style="background:linear-gradient(${p.gradNeon});color:#fff;border:none;border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Gradient</button>
-          <button style="background:transparent;color:${p.tp};border:${Math.max(p.borderWidth,1)}px ${p.borderStyle} ${alpha(p.tp,0.3)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;${F};cursor:pointer">Ghost</button>
-          <button style="background:${alpha(p.primary, 0.12)};color:${p.primary};border:1px solid ${alpha(p.primary, 0.3)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Soft</button>
-          <button style="background:${alpha(p.err, 0.12)};color:${p.err};border:1px solid ${alpha(p.err, 0.3)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Danger</button>
-          <button style="background:${alpha(p.tp,0.04)};color:${p.tm};border:1px solid ${alpha(p.tp,0.1)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;${F};cursor:not-allowed;opacity:0.5" disabled>Disabled</button>
+          <button style="background:${p.primary};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer;letter-spacing:0.04em;box-shadow:0 0 12px ${alpha(p.primary, 0.4)}">Primário</button>
+          <button style="background:${p.accent};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer;box-shadow:0 0 12px ${alpha(p.accent, 0.4)}">Destaque</button>
+          <button style="background:linear-gradient(${p.gradNeon});color:#fff;border:none;border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Gradiente</button>
+          <button style="background:transparent;color:${p.tp};border:${Math.max(p.borderWidth,1)}px ${p.borderStyle} ${alpha(p.tp,0.3)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;${F};cursor:pointer">Fantasma</button>
+          <button style="background:${alpha(p.primary, 0.12)};color:${p.primary};border:1px solid ${alpha(p.primary, 0.3)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Suave</button>
+          <button style="background:${alpha(p.err, 0.12)};color:${p.err};border:1px solid ${alpha(p.err, 0.3)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Perigo</button>
+          <button style="background:${alpha(p.tp,0.04)};color:${p.tm};border:1px solid ${alpha(p.tp,0.1)};border-radius:${p.btnRadius}px;padding:8px 18px;font-size:12px;${F};cursor:not-allowed;opacity:0.5" disabled>Desabilitado</button>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px">
-          ${["sm", "md", "lg"].map((sz, i) => `<button style="background:${p.primary};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:${[5, 8, 12][i]}px ${[12, 18, 24][i]}px;font-size:${[10, 12, 14][i]}px;font-weight:700;${F};cursor:pointer">Button ${sz.toUpperCase()}</button>`).join("")}
-          <button style="background:${p.primary};color:#fff;border:none;border-radius:${p.rFull}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Pill</button>
+          ${["sm", "md", "lg"].map((sz, i) => `<button style="background:${p.primary};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:${[5, 8, 12][i]}px ${[12, 18, 24][i]}px;font-size:${[10, 12, 14][i]}px;font-weight:700;${F};cursor:pointer">Botão ${sz.toUpperCase()}</button>`).join("")}
+          <button style="background:${p.primary};color:#fff;border:none;border-radius:${p.rFull}px;padding:8px 18px;font-size:12px;font-weight:700;${F};cursor:pointer">Pílula</button>
           <button style="background:${p.primary};color:#fff;border:none;border-radius:${p.btnRadius}px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer">+</button>
         </div>
       </div>`;
@@ -1519,7 +1564,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
     // Input fields — chrome follows the Component Style → Input Style setting
     const inputs = `
       <div class="tile">
-        <div class="tile-label">Input Fields · ${p.inputStyle}</div>
+        <div class="tile-label">Campos de Entrada · ${p.inputStyle}</div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <div>
             <label style="font-size:10px;color:${p.ts};${FM};display:block;margin-bottom:4px;letter-spacing:0.08em">USERNAME</label>
@@ -1529,18 +1574,18 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
             </div>
           </div>
           <div style="${inputWrapStyle(p, p.primary, "focus")};padding:9px 12px">
-            <input class="input-spec" style="color:${p.tp}" placeholder="Focused state…" />
+            <input class="input-spec" style="color:${p.tp}" placeholder="Estado de foco…" />
           </div>
           <div style="${inputWrapStyle(p, p.err, "error")};padding:9px 12px">
-            <input class="input-spec" style="color:${p.tp}" placeholder="Invalid input" />
-            <div style="font-size:9px;color:${p.err};margin-top:5px;${FM}">⚠ This field is required</div>
+            <input class="input-spec" style="color:${p.tp}" placeholder="Entrada inválida" />
+            <div style="font-size:9px;color:${p.err};margin-top:5px;${FM}">⚠ Este campo é obrigatório</div>
           </div>
           <div style="${inputWrapStyle(p, p.ok, "valid")};padding:9px 12px;display:flex;align-items:center;justify-content:space-between">
-            <input class="input-spec" style="color:${p.tp}" placeholder="Valid input" />
+            <input class="input-spec" style="color:${p.tp}" placeholder="Entrada válida" />
             <span style="color:${p.ok};font-size:13px;flex-shrink:0">✓</span>
           </div>
           <div style="${inputWrapStyle(p, p.tp, "disabled")};padding:9px 12px;opacity:0.45">
-            <input class="input-spec" style="color:${p.ts}" placeholder="Disabled…" disabled />
+            <input class="input-spec" style="color:${p.ts}" placeholder="Desabilitado…" disabled />
           </div>
         </div>
       </div>`;
@@ -1548,13 +1593,13 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
     // Progress & members
     const progress = `
       <div class="tile">
-        <div class="tile-label">Progress & Team</div>
+        <div class="tile-label">Progresso & Equipe</div>
         <div style="margin-bottom:16px">
           ${[
-            ["Sprint Goal", 78, p.primary],
-            ["Bug Rate", 23, p.err],
-            ["Coverage", 94, p.ok],
-            ["Velocity", 61, p.accent],
+            ["Meta da Sprint", 78, p.primary],
+            ["Taxa de Bugs", 23, p.err],
+            ["Cobertura", 94, p.ok],
+            ["Velocidade", 61, p.accent],
           ]
             .map(
               ([label, pct, c]) => `
@@ -1574,20 +1619,20 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
           <div class="avatar-stack">
             ${[p.primary, p.accent, p.ok, p.warn, p.highlight].map((c, i) => `<div class="avatar" style="background:${alpha(c, 0.2)};color:${c}">${"ABCDE"[i]}</div>`).join("")}
           </div>
-          <span style="font-size:10px;color:${p.ts};${FM}">+12 members</span>
+          <span style="font-size:10px;color:${p.ts};${FM}">+12 membros</span>
         </div>
       </div>`;
   
     // Toggles
     const toggles = `
       <div class="tile">
-        <div class="tile-label">Controls</div>
+        <div class="tile-label">Controles</div>
         <div style="display:flex;flex-direction:column;gap:12px">
           ${[
             ["Feature flags", true, p.primary],
-            ["Dark mode", true, p.accent],
-            ["Beta access", false, p.ok],
-            ["Notifications", true, p.highlight],
+            ["Modo escuro", true, p.accent],
+            ["Acesso beta", false, p.ok],
+            ["Notificações", true, p.highlight],
           ]
             .map(
               ([label, on, c]) => `
@@ -1601,8 +1646,8 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
             .join("")}
           <hr style="border:none;border-top:1px solid rgba(255,255,255,0.05)" />
           ${[
-            ["Enable telemetry", true],
-            ["Auto-save", false],
+            ["Ativar telemetria", true],
+            ["Salvamento automático", false],
           ]
             .map(
               ([label, checked]) => `
@@ -1618,7 +1663,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       </div>`;
   
     return sec(
-      "UI Components",
+      "Componentes de UI",
       `<div class="grid g2">${buttons}</div><div class="grid g3" style="margin-top:10px">${inputs}${progress}${toggles}</div>`,
     );
   }
@@ -1627,16 +1672,16 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
   function buildFormControlsExtended(p, F, FM) {
     const selectBox = `
       <div class="tile">
-        <div class="tile-label">Select</div>
+        <div class="tile-label">Seleção</div>
         <div class="select-box" style="${inputWrapStyle(p, p.tp, "default")};padding:9px 12px;color:${p.tp};font-size:12px;${F}">
-          <span>Choose a plan…</span>
+          <span>Escolha um plano…</span>
           <span style="color:${p.ts};font-size:9px">▾</span>
         </div>
       </div>`;
 
     const radioGroup = `
       <div class="tile">
-        <div class="tile-label">Radio Group</div>
+        <div class="tile-label">Grupo de Rádio</div>
         <div style="display:flex;flex-direction:column;gap:11px">
           ${[["Starter", false], ["Pro", true], ["Enterprise", false]]
             .map(
@@ -1654,7 +1699,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
 
     const rangeSlider = `
       <div class="tile">
-        <div class="tile-label">Range Slider</div>
+        <div class="tile-label">Controle Deslizante</div>
         <div style="padding:22px 4px 4px">
           <div class="range-demo-track" style="height:4px;background:${alpha(p.tp, 0.12)}">
             <div class="range-demo-fill" style="width:62%;background:${p.primary}"></div>
@@ -1670,26 +1715,26 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
 
     const searchInput = `
       <div class="tile">
-        <div class="tile-label">Search</div>
+        <div class="tile-label">Busca</div>
         <div class="search-box" style="${inputWrapStyle(p, p.tp, "default")};padding:8px 12px">
           <span style="color:${p.ts};font-size:12px">⌕</span>
-          <input class="input-spec" style="color:${p.tp};flex:1" placeholder="Search components…" />
+          <input class="input-spec" style="color:${p.tp};flex:1" placeholder="Buscar componentes…" />
           <span style="background:${alpha(p.tp, 0.08)};border-radius:3px;padding:1px 5px;font-size:9px;color:${p.ts};${FM}">⌘K</span>
         </div>
       </div>`;
 
     const dropzone = `
       <div class="tile">
-        <div class="tile-label">File Upload</div>
+        <div class="tile-label">Envio de Arquivo</div>
         <div class="dropzone" style="border:2px dashed ${alpha(p.primary, 0.35)};border-radius:${p.rMd}px;padding:24px 12px;background:${alpha(p.primary, 0.03)}">
           <span style="font-size:20px;color:${p.primary}">⇪</span>
-          <span style="font-size:11px;color:${p.tp};${F};font-weight:600">Drop files or click to upload</span>
-          <span style="font-size:9px;color:${p.ts};${FM}">SVG, PNG, JPG up to 10MB</span>
+          <span style="font-size:11px;color:${p.tp};${F};font-weight:600">Arraste arquivos ou clique para enviar</span>
+          <span style="font-size:9px;color:${p.ts};${FM}">SVG, PNG, JPG até 10MB</span>
         </div>
       </div>`;
 
     return sec(
-      "Form Controls Extended",
+      "Controles de Formulário Avançados",
       `<div class="grid g3">${selectBox}${radioGroup}${rangeSlider}</div>
       <div class="grid g2" style="margin-top:10px">${searchInput}${dropzone}</div>`,
     );
@@ -1702,7 +1747,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
         <div class="navbar">
           <div style="width:26px;height:26px;border-radius:${p.rMd}px;background:linear-gradient(${p.gradBrand});display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:12px;${FD};flex-shrink:0">${p.metaName.charAt(0)}</div>
           <div style="display:flex;gap:16px;flex:1;overflow-x:auto">
-            ${["Overview", "Tokens", "Components", "Docs"]
+            ${["Visão Geral", "Tokens", "Componentes", "Docs"]
               .map(
                 (l, i) => `<span class="nav-link" style="font-size:11px;${F};font-weight:${i === 0 ? 700 : 500};color:${i === 0 ? p.tp : p.ts}">${l}</span>`,
               )
@@ -1715,9 +1760,9 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
 
     const tabs = `
       <div class="tile">
-        <div class="tile-label">Tabs</div>
+        <div class="tile-label">Abas</div>
         <div class="tabs" style="border-bottom:${p.borderWidth}px ${p.borderStyle} ${p.border}">
-          ${["Design", "Code", "Usage", "Changelog"]
+          ${["Design", "Código", "Uso", "Changelog"]
             .map(
               (l, i) => `<div class="tab" style="padding:8px 14px;font-size:11px;${F};font-weight:${i === 0 ? 700 : 500};color:${i === 0 ? p.primary : p.ts};border-bottom:2px solid ${i === 0 ? p.primary : "transparent"};margin-bottom:-${p.borderWidth}px">${l}</div>`,
             )
@@ -1727,9 +1772,9 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
 
     const segmented = `
       <div class="tile">
-        <div class="tile-label">Segmented Control</div>
+        <div class="tile-label">Controle Segmentado</div>
         <div class="segmented" style="border:${p.borderWidth}px ${p.borderStyle} ${p.border};border-radius:${p.rMd}px;overflow:hidden">
-          ${["Day", "Week", "Month"]
+          ${["Dia", "Semana", "Mês"]
             .map(
               (l, i) => `<div class="seg-item" style="padding:7px 16px;font-size:11px;${F};font-weight:600;background:${i === 1 ? p.primary : "transparent"};color:${i === 1 ? p.onPrimary : p.ts}">${l}</div>`,
             )
@@ -1739,9 +1784,9 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
 
     const pagination = `
       <div class="tile">
-        <div class="tile-label">Pagination</div>
+        <div class="tile-label">Paginação</div>
         <div class="pagination">
-          <div class="page-item disabled" style="padding:6px 10px;border-radius:${p.rSm}px;border:${p.borderWidth}px ${p.borderStyle} ${p.border};color:${p.tm};font-size:11px;${FM};opacity:0.5">‹ Prev</div>
+          <div class="page-item disabled" style="padding:6px 10px;border-radius:${p.rSm}px;border:${p.borderWidth}px ${p.borderStyle} ${p.border};color:${p.tm};font-size:11px;${FM};opacity:0.5">‹ Ant</div>
           ${[1, 2, 3]
             .map(
               (n) => `<div class="page-item${n === 1 ? " active" : ""}" style="padding:6px 11px;border-radius:${p.rSm}px;border:${p.borderWidth}px ${p.borderStyle} ${n === 1 ? p.primary : p.border};background:${n === 1 ? p.primary : "transparent"};color:${n === 1 ? p.onPrimary : p.tp};font-size:11px;${FM};font-weight:700">${n}</div>`,
@@ -1749,12 +1794,12 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
             .join("")}
           <span style="color:${p.tm};font-size:11px;padding:0 2px">…</span>
           <div class="page-item" style="padding:6px 11px;border-radius:${p.rSm}px;border:${p.borderWidth}px ${p.borderStyle} ${p.border};color:${p.tp};font-size:11px;${FM}">12</div>
-          <div class="page-item" style="padding:6px 10px;border-radius:${p.rSm}px;border:${p.borderWidth}px ${p.borderStyle} ${p.border};color:${p.tp};font-size:11px;${FM}">Next ›</div>
+          <div class="page-item" style="padding:6px 10px;border-radius:${p.rSm}px;border:${p.borderWidth}px ${p.borderStyle} ${p.border};color:${p.tp};font-size:11px;${FM}">Próx ›</div>
         </div>
       </div>`;
 
     return sec(
-      "Navigation",
+      "Navegação",
       `${navbar}<div class="grid g3" style="margin-top:10px">${tabs}${segmented}${pagination}</div>`,
     );
   }
@@ -1768,14 +1813,14 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
           <div class="window-btn" style="background:#eb5757"></div>
           <div class="window-btn" style="background:#f5a623"></div>
           <div class="window-btn mini-dot-live" style="background:#6ac174"></div>
-          <span style="font-size:9px;color:${p.ts};${FM};margin-left:8px;flex:1;text-align:center">${p.metaName} · Dashboard</span>
+          <span style="font-size:9px;color:${p.ts};${FM};margin-left:8px;flex:1;text-align:center">${p.metaName} · Painel</span>
         </div>
         <div class="window-body" style="background:${p.bg}">
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
             ${[
-              [p.ok, "2,400", "Requests", "2.4k"],
-              [p.primary, "98", "Uptime", "98%"],
-              [p.warn, "142", "Latency", "142ms"],
+              [p.ok, "2,400", "Requisições", "2.4k"],
+              [p.primary, "98", "Disponibilidade", "98%"],
+              [p.warn, "142", "Latência", "142ms"],
             ]
               .map(
                 ([c, num, l, disp]) => `
@@ -1803,12 +1848,12 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
         </div>
         <div class="window-body" style="background:#020208;min-height:110px">
           <pre style="font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.7;color:#60608a"
-          ><span style="color:${p.ok}">✓</span> <span style="color:${p.ts}">loading</span> <span style="color:${p.primary}">${p.metaName}</span>
-  <span style="color:${p.ok}">✓</span> <span style="color:${p.ts}">tokens compiled</span>
-  <span style="color:${p.ok}">✓</span> <span style="color:${p.ts}">version</span> <span style="color:${p.warn}">${p.metaVer}</span>
+          ><span style="color:${p.ok}">✓</span> <span style="color:${p.ts}">carregando</span> <span style="color:${p.primary}">${p.metaName}</span>
+  <span style="color:${p.ok}">✓</span> <span style="color:${p.ts}">tokens compilados</span>
+  <span style="color:${p.ok}">✓</span> <span style="color:${p.ts}">versão</span> <span style="color:${p.warn}">${p.metaVer}</span>
   <span style="color:${p.accent}">$</span> <span style="color:#fff">apply theme --tokens ${p.metaName.toLowerCase()}</span>
-  <span style="color:${p.ts}">  primary: </span><span style="color:${p.ok}">${p.primary}</span>
-  <span style="color:${p.ts}">  accent:  </span><span style="color:${p.ok}">${p.accent}</span>
+  <span style="color:${p.ts}">  primária: </span><span style="color:${p.ok}">${p.primary}</span>
+  <span style="color:${p.ts}">  destaque:  </span><span style="color:${p.ok}">${p.accent}</span>
   <span style="color:${p.accent}">$</span> <span style="color:#fff;animation:blink-cursor 1s infinite">█</span></pre>
         </div>
       </div>`;
@@ -1817,21 +1862,21 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
     const modal = `
       <div class="window-comp" style="box-shadow:${p.shLg}">
         <div class="window-titlebar">
-          <span style="font-size:9px;color:${p.ts};${FM};flex:1">Confirm Action</span>
+          <span style="font-size:9px;color:${p.ts};${FM};flex:1">Confirmar Ação</span>
           <div class="window-btn" style="background:#eb5757"></div>
         </div>
         <div class="window-body">
-          <div style="font-size:14px;font-weight:700;color:${p.tp};${F};margin-bottom:8px">Delete token set?</div>
-          <div style="font-size:11px;color:${p.ts};${F};line-height:1.6;margin-bottom:16px">This will permanently delete <strong style="color:${p.tp}">${p.metaName} v${p.metaVer}</strong> and all associated design tokens. This action cannot be undone.</div>
+          <div style="font-size:14px;font-weight:700;color:${p.tp};${F};margin-bottom:8px">Excluir conjunto de tokens?</div>
+          <div style="font-size:11px;color:${p.ts};${F};line-height:1.6;margin-bottom:16px">Isso excluirá permanentemente <strong style="color:${p.tp}">${p.metaName} v${p.metaVer}</strong> e todos os tokens de design associados. Esta ação não pode ser desfeita.</div>
           <div style="display:flex;gap:8px;justify-content:flex-end">
-            <button style="background:transparent;color:${p.ts};border:1px solid ${alpha(p.tp,0.2)};border-radius:${p.btnRadius}px;padding:7px 14px;font-size:11px;${F};cursor:pointer">Cancel</button>
-            <button style="background:${p.err};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:7px 14px;font-size:11px;font-weight:700;${F};cursor:pointer;box-shadow:0 0 12px ${alpha(p.err, 0.4)}">Delete</button>
+            <button style="background:transparent;color:${p.ts};border:1px solid ${alpha(p.tp,0.2)};border-radius:${p.btnRadius}px;padding:7px 14px;font-size:11px;${F};cursor:pointer">Cancelar</button>
+            <button style="background:${p.err};color:#fff;border:none;border-radius:${p.btnRadius}px;padding:7px 14px;font-size:11px;font-weight:700;${F};cursor:pointer;box-shadow:0 0 12px ${alpha(p.err, 0.4)}">Excluir</button>
           </div>
         </div>
       </div>`;
   
     return sec(
-      "Window Components",
+      "Componentes de Janela",
       `<div class="grid g3">${osWindow}${terminal}${modal}</div>`,
     );
   }
@@ -1842,20 +1887,20 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
     const featureCard = `
       <div style="background:${p.surface};border:${p.borderWidth}px ${p.borderStyle} ${alpha(p.primary, 0.2)};border-radius:${p.cr}px;padding:${p.cp}px;box-shadow:${p.cardShadow}">
         <div style="width:40px;height:40px;border-radius:${p.rMd}px;background:${alpha(p.primary, 0.15)};display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px;border:1px solid ${alpha(p.primary, 0.2)}">◈</div>
-        <div style="font-size:14px;font-weight:700;color:${p.tp};${F};margin-bottom:6px">Token System</div>
-        <div style="font-size:11px;color:${p.ts};${F};line-height:1.6">A unified source of truth for all design decisions across your entire product.</div>
-        <div style="margin-top:14px;font-size:11px;color:${p.primary};${FM};cursor:pointer">Learn more →</div>
+        <div style="font-size:14px;font-weight:700;color:${p.tp};${F};margin-bottom:6px">Sistema de Tokens</div>
+        <div style="font-size:11px;color:${p.ts};${F};line-height:1.6">Uma fonte única da verdade para todas as decisões de design em todo o seu produto.</div>
+        <div style="margin-top:14px;font-size:11px;color:${p.primary};${FM};cursor:pointer">Saiba mais →</div>
       </div>`;
   
     // Pricing card
     const pricingCard = `
       <div style="position:relative;background:linear-gradient(${p.gradNeon});border-radius:${p.cr}px;padding:${p.cp}px;box-shadow:${p.shGlow} ${alpha(p.accent, 0.3)}" class="shimmer-card">
         <div style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.2);border-radius:${p.rFull}px;padding:3px 9px;font-size:9px;font-weight:700;color:#fff;${FM};letter-spacing:0.06em">PRO</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.6);${FM};letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px">Upgrade Plan</div>
-        <div style="font-size:32px;font-weight:900;color:#fff;${FD};margin-bottom:4px">$49</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.6);${F};margin-bottom:16px">per month</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.6);${FM};letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px">Plano Superior</div>
+        <div style="font-size:32px;font-weight:900;color:#fff;${FD};margin-bottom:4px">R$49</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.6);${F};margin-bottom:16px">por mês</div>
         <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
-          ${["Unlimited tokens", "Team collaboration", "Priority support"]
+          ${["Tokens ilimitados", "Colaboração em equipe", "Suporte prioritário"]
             .map(
               (f) => `
             <div style="display:flex;align-items:center;gap:8px">
@@ -1865,7 +1910,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
             )
             .join("")}
         </div>
-        <button style="width:100%;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:${p.btnRadius}px;padding:9px;font-size:12px;font-weight:700;${F};cursor:pointer;backdrop-filter:blur(4px)">Get Pro Access</button>
+        <button style="width:100%;background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:${p.btnRadius}px;padding:9px;font-size:12px;font-weight:700;${F};cursor:pointer;backdrop-filter:blur(4px)">Obter Acesso Pro</button>
       </div>`;
   
     // Profile / identity card
@@ -1875,12 +1920,12 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
           ${p.metaAuthor.charAt(0).toUpperCase()}
         </div>
         <div style="font-size:14px;font-weight:700;color:${p.tp};${F};margin-bottom:4px">${p.metaAuthor}</div>
-        <div style="font-size:10px;color:${p.ts};${FM};margin-bottom:12px">Design System Author</div>
+        <div style="font-size:10px;color:${p.ts};${FM};margin-bottom:12px">Autor do Sistema de Design</div>
         <div style="display:flex;justify-content:center;gap:16px;margin-bottom:14px">
           ${[
             ["42", "Tokens"],
-            ["8", "Systems"],
-            ["2.4k", "Stars"],
+            ["8", "Sistemas"],
+            ["2.4k", "Estrelas"],
           ]
             .map(
               ([n, l]) => `
@@ -1891,34 +1936,34 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
             )
             .join("")}
         </div>
-        <button style="width:100%;background:${alpha(p.accent, 0.15)};color:${p.accent};border:1px solid ${alpha(p.accent, 0.3)};border-radius:${p.btnRadius}px;padding:7px;font-size:11px;font-weight:700;${F};cursor:pointer">Follow</button>
+        <button style="width:100%;background:${alpha(p.accent, 0.15)};color:${p.accent};border:1px solid ${alpha(p.accent, 0.3)};border-radius:${p.btnRadius}px;padding:7px;font-size:11px;font-weight:700;${F};cursor:pointer">Seguir</button>
       </div>`;
   
     // Stat cards row
     const statCards = `
       <div class="stat-card" style="box-shadow:${p.cardShadow};border-width:${p.borderWidth}px">
-        <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Total Tokens</div>
+        <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Total de Tokens</div>
         <div class="count-num" data-target="248" data-display="248" style="font-size:28px;font-weight:900;color:${p.primary};${FD};text-shadow:0 0 20px ${alpha(p.primary, 0.4)}">0</div>
-        <div style="font-size:10px;color:${p.ok};${FM};margin-top:4px">↑ +12 this week</div>
+        <div style="font-size:10px;color:${p.ok};${FM};margin-top:4px">↑ +12 esta semana</div>
       </div>
       <div class="stat-card" style="--p-color:${p.accent};box-shadow:${p.cardShadow};border-width:${p.borderWidth}px">
-        <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Components</div>
+        <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Componentes</div>
         <div class="count-num" data-target="64" data-display="64" style="font-size:28px;font-weight:900;color:${p.accent};${FD};text-shadow:0 0 20px ${alpha(p.accent, 0.4)}">0</div>
-        <div style="font-size:10px;color:${p.ok};${FM};margin-top:4px">↑ +4 this week</div>
+        <div style="font-size:10px;color:${p.ok};${FM};margin-top:4px">↑ +4 esta semana</div>
       </div>
       <div class="stat-card" style="--p-color:${p.ok};box-shadow:${p.cardShadow};border-width:${p.borderWidth}px">
-        <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Coverage</div>
+        <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Cobertura</div>
         <div class="count-num" data-target="97" data-display="97%" style="font-size:28px;font-weight:900;color:${p.ok};${FD};text-shadow:0 0 20px ${alpha(p.ok, 0.4)}">0</div>
-        <div style="font-size:10px;color:${p.ok};${FM};margin-top:4px">→ Stable</div>
+        <div style="font-size:10px;color:${p.ok};${FM};margin-top:4px">→ Estável</div>
       </div>
       <div class="stat-card" style="--p-color:${p.warn};box-shadow:${p.cardShadow};border-width:${p.borderWidth}px">
-        <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Warnings</div>
+        <div style="font-size:9px;color:${p.ts};${FM};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Avisos</div>
         <div class="count-num" data-target="3" data-display="3" style="font-size:28px;font-weight:900;color:${p.warn};${FD};text-shadow:0 0 20px ${alpha(p.warn, 0.4)}">0</div>
-        <div style="font-size:10px;color:${p.ts};${FM};margin-top:4px">↓ -2 resolved</div>
+        <div style="font-size:10px;color:${p.ts};${FM};margin-top:4px">↓ -2 resolvidos</div>
       </div>`;
   
     return sec(
-      "Card Variants",
+      "Variantes de Cartão",
       `
       <div class="grid g3">${featureCard}${pricingCard}${profileCard}</div>
       <div class="grid g4" style="margin-top:10px">${statCards}</div>`,
@@ -1929,11 +1974,11 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
   function buildContentPatterns(p, F, FM, FD) {
     const accordion = `
       <div class="tile">
-        <div class="tile-label">Accordion</div>
+        <div class="tile-label">Acordeão</div>
         ${[
-          { q: "What is a design token?", a: "A named value — color, spacing, font — that stands in for a hardcoded value across your UI.", open: true },
-          { q: "Can I export as CSS variables?", a: "Yes — use the CSS export button in the sidebar to get :root variables plus ready-made component classes.", open: false },
-          { q: "Does it support dark mode?", a: "Yes, toggle Theme Mode in the Meta section and re-export.", open: false },
+          { q: "O que é um design token?", a: "Um valor nomeado — cor, espaçamento, fonte — que substitui um valor fixo em toda a sua UI.", open: true },
+          { q: "Posso exportar como variáveis CSS?", a: "Sim — use o botão de exportação CSS na barra lateral para obter variáveis :root e classes de componentes prontas.", open: false },
+          { q: "Suporta modo escuro?", a: "Sim, alterne o Modo de Tema na seção Meta e exporte novamente.", open: false },
         ]
           .map(
             ({ q, a, open }) => `
@@ -1950,12 +1995,12 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
 
     const listGroup = `
       <div class="tile">
-        <div class="tile-label">List Group</div>
+        <div class="tile-label">Lista de Itens</div>
         <div class="list-group">
           ${[
-            ["◈", "Appearance", "Theme, colors, fonts"],
-            ["⬡", "Components", "34 components"],
-            ["✦", "Exports", "CSS · JSON · YAML"],
+            ["◈", "Aparência", "Tema, cores, fontes"],
+            ["⬡", "Componentes", "34 componentes"],
+            ["✦", "Exportações", "CSS · JSON · YAML"],
           ]
             .map(
               ([icon, label, sub], i, arr) => `
@@ -1974,12 +2019,12 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
 
     const testimonial = `
       <div class="tile" style="padding:${p.cp}px">
-        <div class="testimonial-quote" style="font-size:12px;color:${p.tp};${F};line-height:1.7;font-style:italic">"This token system cut our design-to-dev handoff time in half."</div>
+        <div class="testimonial-quote" style="font-size:12px;color:${p.tp};${F};line-height:1.7;font-style:italic">"Esse sistema de tokens reduziu pela metade o tempo de handoff entre design e dev."</div>
         <div style="display:flex;align-items:center;gap:9px;margin-top:16px">
           <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(${p.gradSunset});flex-shrink:0"></div>
           <div>
             <div style="font-size:11px;font-weight:700;color:${p.tp};${F}">Maya Chen</div>
-            <div style="font-size:9px;color:${p.ts};${FM}">Staff Engineer</div>
+            <div style="font-size:9px;color:${p.ts};${FM}">Engenheira Sênior</div>
           </div>
         </div>
       </div>`;
@@ -1987,14 +2032,14 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
     const emptyState = `
       <div class="tile empty-state" style="padding:30px 14px">
         <div style="width:44px;height:44px;border-radius:${p.rLg}px;background:${alpha(p.tm, 0.1)};display:flex;align-items:center;justify-content:center;font-size:20px;color:${p.tm};margin-bottom:12px">☐</div>
-        <div style="font-size:12px;font-weight:700;color:${p.tp};${F};margin-bottom:4px">No components yet</div>
-        <div style="font-size:10.5px;color:${p.ts};${F};margin-bottom:14px;max-width:200px">Import a token file or add one from the sidebar to get started.</div>
-        <button style="background:${p.primary};color:${p.onPrimary};border:none;border-radius:${p.btnRadius}px;padding:7px 16px;font-size:11px;font-weight:700;${F};cursor:pointer">Add Component</button>
+        <div style="font-size:12px;font-weight:700;color:${p.tp};${F};margin-bottom:4px">Ainda sem componentes</div>
+        <div style="font-size:10.5px;color:${p.ts};${F};margin-bottom:14px;max-width:200px">Importe um arquivo de tokens ou adicione um pela barra lateral para começar.</div>
+        <button style="background:${p.primary};color:${p.onPrimary};border:none;border-radius:${p.btnRadius}px;padding:7px 16px;font-size:11px;font-weight:700;${F};cursor:pointer">Adicionar Componente</button>
       </div>`;
 
     const skeleton = `
       <div class="tile">
-        <div class="tile-label">Skeleton Loader</div>
+        <div class="tile-label">Carregamento Esqueleto</div>
         <div style="display:flex;gap:12px;align-items:center">
           <div class="skeleton" style="width:40px;height:40px;border-radius:50%;background:${alpha(p.tp, 0.08)};flex-shrink:0"></div>
           <div style="flex:1;display:flex;flex-direction:column;gap:7px">
@@ -2006,15 +2051,15 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
 
     const rating = `
       <div class="tile">
-        <div class="tile-label">Rating</div>
+        <div class="tile-label">Avaliação</div>
         <div class="rating-row">
           ${[1, 1, 1, 1, 0].map((f) => `<span class="rating-star" style="color:${f ? p.warn : alpha(p.tp, 0.15)};font-size:18px">★</span>`).join("")}
         </div>
-        <div style="font-size:10px;color:${p.ts};${FM};margin-top:6px">4.0 out of 5 · 128 reviews</div>
+        <div style="font-size:10px;color:${p.ts};${FM};margin-top:6px">4.0 de 5 · 128 avaliações</div>
       </div>`;
 
     return sec(
-      "Content Patterns",
+      "Padrões de Conteúdo",
       `<div class="grid g2">${accordion}${listGroup}</div>
       <div class="grid g3" style="margin-top:10px">${testimonial}${emptyState}<div style="display:flex;flex-direction:column;gap:10px">${skeleton}${rating}</div></div>`,
     );
@@ -2026,61 +2071,61 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       {
         name: "primary",
         value: p.primary,
-        type: "Color",
-        status: "stable",
+        type: "Cor",
+        status: "estável",
         since: "v1.0",
       },
       {
         name: "accent",
         value: p.accent,
-        type: "Color",
-        status: "stable",
+        type: "Cor",
+        status: "estável",
         since: "v1.0",
       },
       {
         name: "highlight",
         value: p.highlight,
-        type: "Color",
-        status: "new",
+        type: "Cor",
+        status: "novo",
         since: "v2.0",
       },
       {
         name: "surface",
         value: p.surface,
-        type: "Color",
-        status: "stable",
+        type: "Cor",
+        status: "estável",
         since: "v1.0",
       },
       {
         name: "font-display",
         value: p.fd,
-        type: "Font",
-        status: "changed",
+        type: "Fonte",
+        status: "alterado",
         since: "v2.0",
       },
       {
         name: "radius-sm",
         value: p.rSm + "px",
-        type: "Space",
-        status: "stable",
+        type: "Espaço",
+        status: "estável",
         since: "v1.0",
       },
     ];
-  
+
     const statusColor = {
-      stable: p.ok,
-      new: p.info,
-      changed: p.warn,
-      deprecated: p.err,
+      "estável": p.ok,
+      "novo": p.info,
+      "alterado": p.warn,
+      "descontinuado": p.err,
     };
   
     const tableHtml = `
       <div class="tile" style="overflow:auto">
-        <div class="tile-label">Token Reference</div>
+        <div class="tile-label">Referência de Tokens</div>
         <table class="data-table">
           <thead>
             <tr>
-              ${["Token", "Value", "Type", "Status", "Since"].map((h) => `<th style="color:${p.ts}">${h}</th>`).join("")}
+              ${["Token", "Valor", "Tipo", "Status", "Desde"].map((h) => `<th style="color:${p.ts}">${h}</th>`).join("")}
             </tr>
           </thead>
           <tbody>
@@ -2105,26 +2150,26 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
         </table>
       </div>`;
   
-    return sec("Data Table", tableHtml);
+    return sec("Tabela de Dados", tableHtml);
   }
   
   /* 13. TAGS & CHIPS ───────────────────────────────── */
   function buildTagsChips(p, F, FM) {
     const tagSets = [
       {
-        label: "Category Tags",
+        label: "Tags de Categoria",
         tags: [
           [p.primary, "Design"],
-          [p.accent, "System"],
+          [p.accent, "Sistema"],
           [p.highlight, "Tokens"],
-          [p.ok, "Stable"],
+          [p.ok, "Estável"],
           [p.warn, "Beta"],
-          [p.err, "Breaking"],
-          [p.info, "New"],
+          [p.err, "Ruptura"],
+          [p.info, "Novo"],
         ],
       },
       {
-        label: "Tech Stack",
+        label: "Stack Tecnológica",
         tags: [
           [p.primary, "CSS"],
           [p.accent, "JS"],
@@ -2155,11 +2200,11 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
     // Breadcrumb
     const breadcrumb = `
       <div class="tile">
-        <div class="tile-label">Breadcrumb</div>
+        <div class="tile-label">Trilha de Navegação</div>
         <div class="breadcrumb" style="color:${p.ts}">
-          <span style="color:${p.ts};cursor:pointer">Home</span>
+          <span style="color:${p.ts};cursor:pointer">Início</span>
           <span style="color:${p.tm}">›</span>
-          <span style="color:${p.ts};cursor:pointer">Systems</span>
+          <span style="color:${p.ts};cursor:pointer">Sistemas</span>
           <span style="color:${p.tm}">›</span>
           <span style="color:${p.tp};font-weight:600">${p.metaName}</span>
         </div>
@@ -2168,13 +2213,13 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
     // Kbd shortcuts
     const kbd = `
       <div class="tile">
-        <div class="tile-label">Keyboard Shortcuts</div>
+        <div class="tile-label">Atalhos de Teclado</div>
         <div style="display:flex;flex-direction:column;gap:8px">
           ${[
-            ["Apply", "⌘ + ↵"],
-            ["Export", "⌘ + E"],
-            ["Import", "⌘ + I"],
-            ["Reset", "⌘ + R"],
+            ["Aplicar", "⌘ + ↵"],
+            ["Exportar", "⌘ + E"],
+            ["Importar", "⌘ + I"],
+            ["Redefinir", "⌘ + R"],
           ]
             .map(
               ([action, keys]) => `
@@ -2196,7 +2241,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       </div>`;
   
     return sec(
-      "Tags, Chips & Navigation",
+      "Tags, Chips & Navegação",
       `<div class="grid g3">${html}${breadcrumb}${kbd}</div>`,
     );
   }
@@ -2207,43 +2252,43 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       {
         color: p.ok,
         icon: "✓",
-        title: "v2.0 Released",
-        sub: "Major token overhaul",
-        time: "Today",
+        title: "v2.0 Lançada",
+        sub: "Grande reformulação de tokens",
+        time: "Hoje",
       },
       {
         color: p.primary,
         icon: "◈",
-        title: "Display font added",
-        sub: "Orbitron for headings",
-        time: "2d ago",
+        title: "Fonte display adicionada",
+        sub: "Orbitron para títulos",
+        time: "2d atrás",
       },
       {
         color: p.accent,
         icon: "✦",
-        title: "Gradient system v2",
-        sub: "6 new gradient presets",
-        time: "5d ago",
+        title: "Sistema de gradientes v2",
+        sub: "6 novos presets de gradiente",
+        time: "5d atrás",
       },
       {
         color: p.warn,
         icon: "!",
-        title: "Breaking change",
-        sub: "Renamed spacing.xxl → xxxl",
-        time: "1w ago",
+        title: "Mudança de ruptura",
+        sub: "Renomeado spacing.xxl → xxxl",
+        time: "1sem atrás",
       },
       {
         color: p.info,
         icon: "i",
-        title: "v1.0 Published",
-        sub: "Initial token system",
-        time: "1mo ago",
+        title: "v1.0 Publicada",
+        sub: "Sistema de tokens inicial",
+        time: "1mês atrás",
       },
     ];
   
     const html = `
       <div class="tile" style="padding:18px">
-        <div class="tile-label">Changelog</div>
+        <div class="tile-label">Histórico de Mudanças</div>
         <div style="margin-top:4px">
           ${events
             .map(
@@ -2264,7 +2309,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       </div>`;
   
     return sec(
-      "Timeline & Changelog",
+      "Linha do Tempo & Mudanças",
       `<div class="grid g2">${html}<div class="grid" style="gap:8px">
       ${events
         .slice(0, 3)
@@ -2289,13 +2334,13 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
           <div class="mini-dot" style="background:#eb5757"></div>
           <div class="mini-dot" style="background:#f5a623"></div>
           <div class="mini-dot mini-dot-live" style="background:#6ac174"></div>
-          <span style="font-size:9px;color:${p.ts};${FM};margin-left:6px">${p.metaName} · Live</span>
+          <span style="font-size:9px;color:${p.ts};${FM};margin-left:6px">${p.metaName} · Ao Vivo</span>
         </div>
         <div class="mini-screen-body" style="background:${p.bg};padding:14px">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
             ${[
               [p.ok, "2400", "RPS", "2.4k"],
-              [p.primary, "99", "UP", "99%"],
+              [p.primary, "99", "ATIVO", "99%"],
               [p.warn, "80", "MS", "80ms"],
             ]
               .map(
@@ -2323,13 +2368,13 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
               ${[p.tp, p.primary, p.tp].map((c, i) => `<div style="height:2px;width:${[18, 12, 18][i]}px;border-radius:1px;background:${c}"></div>`).join("")}
             </div>
           </div>
-          <div style="font-size:8px;color:${p.ts};${FM};letter-spacing:0.12em;text-transform:uppercase;margin-bottom:3px">Hello,</div>
+          <div style="font-size:8px;color:${p.ts};${FM};letter-spacing:0.12em;text-transform:uppercase;margin-bottom:3px">Olá,</div>
           <div style="font-size:17px;font-weight:900;color:${p.tp};${FD};margin-bottom:14px">${p.metaAuthor}</div>
           <div style="display:flex;flex-direction:column;gap:6px">
             ${[
               [p.primary, "Deploy", "↑3"],
               [p.ok, "Build", "✓"],
-              [p.warn, "Review", "!"],
+              [p.warn, "Revisão", "!"],
             ]
               .map(
                 ([c, l, t]) => `
@@ -2351,14 +2396,14 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
           <div class="mini-dot" style="background:#eb5757"></div>
           <div class="mini-dot" style="background:#f5a623"></div>
           <div class="mini-dot" style="background:#6ac174"></div>
-          <span style="font-size:9px;color:${p.ts};${FM};margin-left:6px">Notifications · 4</span>
+          <span style="font-size:9px;color:${p.ts};${FM};margin-left:6px">Notificações · 4</span>
         </div>
         <div class="mini-screen-body" style="background:${p.bg};display:flex;flex-direction:column;gap:5px">
           ${[
-            [p.ok, "✓", "Deploy successful", "2m ago"],
-            [p.info, "·", "PR #42 merged", "5m ago"],
-            [p.warn, "!", "High memory", "12m ago"],
-            [p.err, "✕", "Tests failed", "1h ago"],
+            [p.ok, "✓", "Deploy concluído", "2m atrás"],
+            [p.info, "·", "PR #42 mesclado", "5m atrás"],
+            [p.warn, "!", "Memória alta", "12m atrás"],
+            [p.err, "✕", "Testes falharam", "1h atrás"],
           ]
             .map(
               ([c, icon, msg, time]) => `
@@ -2375,7 +2420,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       </div>`;
   
     return sec(
-      "Mini Screens",
+      "Mini Telas",
       `<div class="grid g3">${dashboard}${mobile}${notifications}</div>`,
     );
   }
@@ -2383,13 +2428,13 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
   /* 16. DATA CHARTS ────────────────────────────────── */
   function buildCharts(p, F, FM) {
     return sec(
-      "Data Visualization",
+      "Visualização de Dados",
       `
       <div class="grid g2">
-        <div class="tile chart-tile"><div class="tile-label">Area · Performance</div><div style="height:140px"><canvas id="cLine"></canvas></div></div>
-        <div class="tile chart-tile"><div class="tile-label">Bar · Distribution</div><div style="height:140px"><canvas id="cBar"></canvas></div></div>
-        <div class="tile chart-tile"><div class="tile-label">Doughnut · Composition</div><div style="height:140px;display:flex;align-items:center;justify-content:center"><canvas id="cDoughnut"></canvas></div></div>
-        <div class="tile chart-tile"><div class="tile-label">Radar · Coverage</div><div style="height:140px;display:flex;align-items:center;justify-content:center"><canvas id="cRadar"></canvas></div></div>
+        <div class="tile chart-tile"><div class="tile-label">Área · Desempenho</div><div style="height:140px"><canvas id="cLine"></canvas></div></div>
+        <div class="tile chart-tile"><div class="tile-label">Barras · Distribuição</div><div style="height:140px"><canvas id="cBar"></canvas></div></div>
+        <div class="tile chart-tile"><div class="tile-label">Rosca · Composição</div><div style="height:140px;display:flex;align-items:center;justify-content:center"><canvas id="cDoughnut"></canvas></div></div>
+        <div class="tile chart-tile"><div class="tile-label">Radar · Cobertura</div><div style="height:140px;display:flex;align-items:center;justify-content:center"><canvas id="cRadar"></canvas></div></div>
       </div>`,
     );
   }
@@ -2431,11 +2476,11 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       .join("");
   
     return sec(
-      "Spacing & Border Radius",
+      "Espaçamento & Raio de Borda",
       `
       <div class="grid g2">
-        <div class="tile"><div class="tile-label">Spacing Scale</div>${spacingBars}</div>
-        <div class="tile"><div class="tile-label">Border Radius</div>${radiusShapes}</div>
+        <div class="tile"><div class="tile-label">Escala de Espaçamento</div>${spacingBars}</div>
+        <div class="tile"><div class="tile-label">Raio de Borda</div>${radiusShapes}</div>
       </div>`,
     );
   }
@@ -2444,17 +2489,17 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
   function buildInteractionStates(p, F, FM) {
     const tooltips = `
       <div class="tile">
-        <div class="tile-label">Tooltips & Overlays</div>
+        <div class="tile-label">Dicas & Sobreposições</div>
         <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;padding-top:36px">
           ${[
-            { bg: p.surface, borderC: p.tp, tc: p.tp,  btnBg: p.surface,  btnBorder: p.tp,    label: "Default"  },
-            { bg: p.primary, borderC: p.primary, tc: "#fff", btnBg: p.primary, btnBorder: p.primary, label: "Primary"  },
-            { bg: p.err,     borderC: p.err,     tc: "#fff", btnBg: p.err,     btnBorder: p.err,     label: "Danger"   },
+            { bg: p.surface, borderC: p.tp, tc: p.tp,  btnBg: p.surface,  btnBorder: p.tp,    label: "Padrão"  },
+            { bg: p.primary, borderC: p.primary, tc: "#fff", btnBg: p.primary, btnBorder: p.primary, label: "Primário"  },
+            { bg: p.err,     borderC: p.err,     tc: "#fff", btnBg: p.err,     btnBorder: p.err,     label: "Perigo"   },
           ]
             .map(
               ({ bg, borderC, tc, btnBg, btnBorder, label }) => `
             <div class="tooltip-wrap">
-              <div class="tooltip-box" style="background:${bg};border:1px solid ${alpha(borderC,0.35)};color:${tc};box-shadow:0 4px 16px ${alpha(p.tp,0.12)}">${label} tooltip
+              <div class="tooltip-box" style="background:${bg};border:1px solid ${alpha(borderC,0.35)};color:${tc};box-shadow:0 4px 16px ${alpha(p.tp,0.12)}">dica ${label}
                 <div style="position:absolute;top:100%;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid ${bg}"></div>
               </div>
               <button style="background:${btnBg};border:1px solid ${alpha(btnBorder,0.5)};color:${tc};border-radius:${p.rMd}px;padding:6px 14px;font-size:11px;font-weight:600;${F};cursor:pointer">${label}</button>
@@ -2466,7 +2511,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
   
     const codeBlock = `
       <div class="tile">
-        <div class="tile-label">Code Specimen</div>
+        <div class="tile-label">Amostra de Código</div>
         <div style="background:${p.bg};border-radius:${p.rMd}px;padding:14px;border:1px solid ${alpha(p.tp,0.1)}">
           <pre style="font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.7;color:${p.tm};white-space:pre"><span style="color:${p.accent}">import</span> <span style="color:${p.tp}">{ tokens }</span> <span style="color:${p.accent}">from</span> <span style="color:${p.ok}">'${p.metaName.toLowerCase().replace(/\s/g, "-")}'</span>
   
@@ -2480,7 +2525,7 @@ Full detail — gradients, typography scale, shadows, every raw token — is in 
       </div>`;
   
     return sec(
-      "Interaction Tokens",
+      "Tokens de Interação",
       `<div class="grid g2">${tooltips}${codeBlock}</div>`,
     );
   }
