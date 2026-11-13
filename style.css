@@ -1482,9 +1482,8 @@ details.section[open] > .section-body > *:nth-child(n+10) { animation-delay: 0.2
   position: fixed;
   inset: 0;
   z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   overflow: hidden;
   background: radial-gradient(120% 120% at 50% 0%, #10142e 0%, #060714 55%, #030309 100%);
   font-family: 'Space Grotesk', sans-serif;
@@ -1537,6 +1536,9 @@ details.section[open] > .section-body > *:nth-child(n+10) { animation-delay: 0.2
 .intro-stage {
   position: relative;
   z-index: 1;
+  grid-area: 1 / 1;           /* loader e apresentação empilhados na mesma célula */
+  justify-self: center;
+  align-self: center;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1551,7 +1553,7 @@ details.section[open] > .section-body > *:nth-child(n+10) { animation-delay: 0.2
 #intro-stage-loader.intro-fade-out {
   opacity: 0;
   transform: translateY(-8px) scale(0.98);
-  position: absolute;
+  pointer-events: none;
 }
 
 .intro-logo {
@@ -1622,7 +1624,7 @@ details.section[open] > .section-body > *:nth-child(n+10) { animation-delay: 0.2
 
 /* — Presentation stage — */
 .intro-stage-presentation {
-  max-width: 480px;
+  width: min(480px, 100%);
   opacity: 0;
   visibility: hidden;
   transform: translateY(10px);
