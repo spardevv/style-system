@@ -1566,6 +1566,10 @@ details.section[open] > .section-body > *:nth-child(n+10) { animation-delay: 0.2
   margin-bottom: 28px;
 }
 .intro-logo-mark {
+  display: block;
+  width: 100%;
+  text-align: center;
+  line-height: 1;
   font-size: 34px;
   color: #6d8bff;
   text-shadow: 0 0 24px rgba(109, 139, 255, 0.7);
@@ -1610,6 +1614,13 @@ details.section[open] > .section-body > *:nth-child(n+10) { animation-delay: 0.2
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #7280b0;
+  text-align: center;
+  padding-left: 0.08em;       /* compensa o letter-spacing do último caractere */
+}
+/* Os pontinhos ficam fora do fluxo: não deslocam o texto do centro. */
+.intro-dots {
+  position: absolute;
+  white-space: nowrap;
 }
 .intro-dots span {
   animation: intro-dot-blink 1.2s infinite;
